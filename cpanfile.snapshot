@@ -931,6 +931,21 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.006
+  Modern-Perl-1.20170117
+    pathname: C/CH/CHROMATIC/Modern-Perl-1.20170117.tar.gz
+    provides:
+      Modern::Perl 1.20170117
+    requirements:
+      ExtUtils::MakeMaker 0
+      IO::File 0
+      IO::Handle 0
+      Module::Build 0.28
+      autodie 2.22
+      feature 0
+      mro 0
+      perl 5.010
+      strict 0
+      warnings 0
   Module-Build-0.4224
     pathname: L/LE/LEONT/Module-Build-0.4224.tar.gz
     provides:
