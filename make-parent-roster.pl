@@ -45,7 +45,7 @@ my $ins_parents_st = qq{
 
 my $ins_parents = $dbh->prepare($ins_parents_st);
 
-foreach my $parent (@$parents) {
+foreach my $parent ($parents->@*) {
     $parent = process_parent($parent);
     $ins_parents->execute($parent->@*);
 }
