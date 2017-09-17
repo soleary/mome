@@ -19,6 +19,8 @@ my $parents_st = qq{
         payment_schedule
     from
         signups
+    order by
+        rowid
 };
 
 # Set up fields for cleanup subroutine

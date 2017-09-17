@@ -26,6 +26,8 @@ my $students_st = qq{
         class_3
     from
         signups
+    order by
+        rowid
 };
 
 my $students = $dbh->selectall_arrayref($students_st);
