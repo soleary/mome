@@ -35,7 +35,7 @@ my $parents = $dbh->selectall_arrayref($parents_st);
 #die;
 
 my $ins_parents_st = qq{
-    insert into parents(
+    insert into parent_export(
         first_name,
         last_name,
         email,

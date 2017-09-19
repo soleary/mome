@@ -32,12 +32,8 @@ my $students_st = qq{
 
 my $students = $dbh->selectall_arrayref($students_st);
 
-#use Data::Dumper;
-#print Dumper $students;
-#die;
-
 my $ins_student_st = qq{
-    insert into students(
+    insert into student_export(
         first_name,
         last_name,
         homeroom,
@@ -48,7 +44,6 @@ my $ins_student_st = qq{
 
 my $ins_student = $dbh->prepare($ins_student_st);
 
-# my @fields = qw(first last homeroom ins1 class1 ins2 class2 ins3 class3);
 foreach my $student ($students->@*) {
     $student = clean_student($student);
     foreach my $sec (1..3) {
