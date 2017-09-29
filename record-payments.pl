@@ -10,7 +10,7 @@ use DateTime;
 
 $|++;
 
-my $TEST = 1;
+my $TESTING = '';
 my $TODAY = DateTime->now()->ymd();
 
 Math::Currency->format('USD');
@@ -42,21 +42,32 @@ while (1) {
         next;
     }
 
-    my $email = prompt( 'Select parent for payment:', build_parent_hash(@search));
+    my $parent = prompt( 'Select parent for payment:', build_parent_hash(@search));
+
+    my ($email, $fname, $lname) = $parent->@*;
 
     next unless $email;
 
     my %payment_types = (
         p => { d => 'PayPal' },
         c => { d => 'Cash' },
-        k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $r = <STDIN>); return "check # $r";} },
+        k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $r = <STDIN>); return "check $r";} },
     );
 
     my $type = prompt( 'Payment type:', %payment_types);
 
-    use Data::Dumper;
-    print Dumper $type;
+    print "Amount: ";
+    chomp(my $amount = <STDIN>);
+    $amount = Math::Currency->new($amount);
 
+    say "Payment OK?";
+    printf "%s %s %s : %s \$%.2f\n", $email, $fname, $lname, $type, $amount->as_float();
+    print "[Y/N]: ";
+    chomp( my $resp = <STDIN> );
+
+    next unless $resp =~ /y/i;
+
+    $payment->execute($email, $type, $amount->as_float(), $TODAY, $TESTING);
 }
 
 sub prompt {
@@ -68,9 +79,6 @@ sub prompt {
     }
 
     my %items = @_;
-
-    use Data::Dumper;
-    print Dumper \%items;
 
     # Add values if they aren't in %items
     foreach my $k (keys %items) {
@@ -108,7 +116,7 @@ sub build_parent_hash {
     foreach my $rent (@rents) {
         $i++;
         $values{$i}{d} = sprintf '%-28s %s %s', $rent->@*;
-        $values{$i}{v} = $rent->[0];
+        $values{$i}{v} = [ $rent->@* ];
     }
 
     return %values;
