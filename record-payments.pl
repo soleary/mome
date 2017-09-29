@@ -6,10 +6,12 @@ use autodie;
 use DBI;
 use Math::Currency;
 use Term::ReadKey;
+use DateTime;
 
 $|++;
 
 my $TEST = 1;
+my $TODAY = DateTime->now()->ymd();
 
 Math::Currency->format('USD');
 
@@ -18,7 +20,7 @@ my $DBFILE = 'sjm-2017-2018.sqlite';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $email_search = $dbh->prepare( qq{ select email, first_name, last_name from parents where first_name like ? or last_name like ? or email like ?; } );
-#my $payment =
+my $payment = $dbh->prepare(qq{ insert into payments( email, type, amount, date, testing ) values (?,?,?,?,?); });
 
 while (1) {
     print "Search term: ";
@@ -44,27 +46,31 @@ while (1) {
 
     next unless $email;
 
-    use Data::Dumper;
-    print Dumper $email;
-
     my %payment_types = (
         p => { d => 'PayPal' },
-        k => { d => 'Check' },
-        c => { d => 'Cash', c   => sub { print 'Enter Check Numnber; '; return 'check #' . <STDIN>; }
+        c => { d => 'Cash' },
+        k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $r = <STDIN>); return "check # $r";} },
     );
 
     my $type = prompt( 'Payment type:', %payment_types);
+
+    use Data::Dumper;
+    print Dumper $type;
+
 }
 
 sub prompt {
     my $prompt = shift;
 
-    # Don't actually prompt if there's only one prompt and value
+    # Don't actually prompt if there's only one value
     if (@_ == 2) {
         return $_[1]->{v};
     }
 
     my %items = @_;
+
+    use Data::Dumper;
+    print Dumper \%items;
 
     # Add values if they aren't in %items
     foreach my $k (keys %items) {
@@ -77,8 +83,8 @@ sub prompt {
     my $key;
     do {
         say $prompt;
-        foreach my $k (keys %items) {
-            printf "%2d. %s\n", $k, $items{$k}{d};
+        foreach my $k (sort keys %items) {
+            printf "%2s. %s\n", $k, $items{$k}{d};
         }
         while (not defined ($key = ReadKey(-1))) {}
     } until
@@ -87,7 +93,7 @@ sub prompt {
     ReadMode 0;
 
     if ($items{$key}{c}) {
-        $items{$key}{v} = $items{$keys}{c}->($items{$key}{v});
+        $items{$key}{v} = $items{$key}{c}->($items{$key}{v});
     }
 
     return $items{$key}{v};
