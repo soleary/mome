@@ -14,6 +14,7 @@ my $DBH = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $BASE_URL = 'https://www.paypal.me/mrsolearymusic/';
 my $TESTING = 1;
+my $DEBUG = 0;
 my $DATE;
 
 my $mk_invoice = $DBH->prepare(qq{
@@ -26,14 +27,11 @@ my $schedule_st = qq{ select payment_date, schedule from payment_schedule; };
 
 my %schedule = build_schedule($schedule_st);
 
-#my $sch = $DBH->quote( join ',',  prompt_for_schedules(%schedule) );
 my $sch = join ',',  prompt_for_schedules(%schedule);
 
 my $parents_st = qq{ select first_name, last_name, email, tuition, payment_schedule from parents where payment_schedule in ($sch); };
 my $parents = $DBH->prepare($parents_st);
 $parents->execute();
-
-#my $TODAY = DateTime->now()->ymd();
 
 foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $tuition = Math::Currency->new($p->[3]);
@@ -42,19 +40,20 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $cash = $tuition / $plan;
     my $paypal = get_paypal_amount($cash);
     my $url = $BASE_URL . $paypal->as_float();
-    #printf "%15s, %9s %s %7s %7s %5s\n", $p->[1], $tuition, $plan, $cash, $paypal, $paypal - $cash;
+    printf "%15s, %9s %s %7s %7s %6s\n", $p->[1], $tuition, $plan, $cash, $paypal, $paypal - $cash if $DEBUG;
 
     my @inv = @{$p}[0..2];
 
     push @inv, $tuition, $plan, $cash, $paypal, $url, $DATE, $TESTING;
 
-    #$mk_invoice->execute(@inv);
+    $mk_invoice->execute(@inv);
 }
 
 sub get_paypal_amount {
     my $cash = $_[0];
-    my $surcharge = $cash * .029 + .3;
-    return $cash + $surcharge;
+
+    $cash += .30;
+    return $cash / ( 1 - .029 );
 }
 
 sub prompt_for_schedules {
