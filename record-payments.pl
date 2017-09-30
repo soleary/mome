@@ -10,7 +10,7 @@ use DateTime;
 
 $|++;
 
-my $TESTING = '';
+my $TESTING;
 my $TODAY = DateTime->now()->ymd();
 
 Math::Currency->format('USD');
