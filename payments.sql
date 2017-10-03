@@ -4,5 +4,6 @@ create table payments(
     ,"type" text not null
     ,amount text not null
     ,validation text
+    ,deposited text
     ,testing text
 );
