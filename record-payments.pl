@@ -86,7 +86,7 @@ sub prompt {
         $items{$k}{v} = lc $items{$k}{d};
     }
 
-    ReadMode 4;
+    ReadMode 1;
 
     my $key;
     do {
@@ -94,9 +94,12 @@ sub prompt {
         foreach my $k (sort keys %items) {
             printf "%2s. %s\n", $k, $items{$k}{d};
         }
+        print "? ";
         while (not defined ($key = ReadKey(-1))) {}
     } until
         ($items{$key}{v} or $key eq 'q');
+
+    print "\n";
 
     ReadMode 0;
 
