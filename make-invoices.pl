@@ -19,8 +19,8 @@ my $DATE;
 
 my $mk_invoice = $DBH->prepare(qq{
     insert into invoices(
-        "First Name", "Last Name", "Email Address", total_tuition, payment_plan, cash_amount, paypal_amount, paypal_url, billing_date, testing
-    ) values (?,?,?,?,?,?,?,?,?,?)
+        "First Name", "Last Name", "Email Address", total_tuition, payment_plan, amount, cash_amount, paypal_amount, paypal_url, billing_date, testing
+    ) values (?,?,?,?,?,?,?,?,?,?,?)
 });
 
 my $schedule_st = qq{ select payment_date, schedule from payment_schedule; };
@@ -44,7 +44,7 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
 
     my @inv = @{$p}[0..2];
 
-    push @inv, $tuition, $plan, $cash, $paypal, $url, $DATE, $TESTING;
+    push @inv, $tuition, $plan, $cash->as_float(), $cash, $paypal, $url, $DATE, $TESTING;
 
     $mk_invoice->execute(@inv);
 }
