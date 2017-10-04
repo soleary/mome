@@ -86,7 +86,7 @@ sub prompt {
         $items{$k}{v} = lc $items{$k}{d};
     }
 
-    ReadMode 1;
+    ReadMode 4;
 
     my $key;
     do {
