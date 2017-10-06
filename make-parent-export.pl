@@ -74,9 +74,7 @@ sub fix_email {
 
 sub fix_phone {
     my $num = $_[0];
-
     $num =~ s/\D//g;
-
     return substr($num, 0, 3) . '-' . substr($num, 3, 3) . '-' . substr($num, 6);
 }
 
