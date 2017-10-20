@@ -10,39 +10,45 @@ Math::Currency->format('USD');
 
 my $DBFILE = 'sjm-2017-2018.sqlite';
 
-my $DBH = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $parents_st = qq{ select first_name, last_name, email, tuition, payment_schedule from parents; };
-my $parents = $DBH->prepare($parents_st);
+my $parents = $dbh->prepare($parents_st);
 $parents->execute();
 
-my $invoice_total = $DBH->prepare(qq{ select sum(debit) from invoices where "Email Address" = ?; });
-my $payment_total = $DBH->prepare(qq{ select sum(amount) from payments where email = ? and validation is not null; });
+my $invoice_total = $dbh->prepare(qq{ select sum(debit) from invoices where "Email Address" = ?; });
+my $payment_total = $dbh->prepare(qq{ select sum(amount) from payments where email = ? and validation is not null; });
 
-my $invoices = $DBH->prepare(qq{ select count(debit) from invoices where "Email Address" = ?; });
-my $payments = $DBH->prepare(qq{ select count(amount) from payments where email = ? and validation is not null; });
+my $invoices = $dbh->prepare(qq{ select count(debit) from invoices where "Email Address" = ?; });
+my $payments = $dbh->prepare(qq{ select count(amount) from payments where email = ? and validation is not null; });
 
 $ARGV[0] //= '';
 
 no warnings;
-printf "%25s %9s %s %10s %s %10s %s %8s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S ];
+printf "%21s %9s %s %10s %s %10s %s %8s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S ];
 use warnings;
+
 foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $email = $p->[2];
     my $plan = $p->[4];
     my $tuition = Math::Currency->new($p->[3]);
+    my $name = $p->[1];
+
+    $name =~ s/ /_/;
 
     my ($paid, $owe) = get_totals($email);
     my $balance = $paid - $owe;
 
     my ($pmts, $invs) = get_counts($email);
 
-    next if $ARGV[0] eq 'n' and ($balance >  0 or $balance == 0);
-    next if $ARGV[0] eq 'p' and ($balance <  0 or $balance == 0);
+    next if $ARGV[0] eq 'n' and $balance >= 0;
+    next if $ARGV[0] eq 'p' and $balance <= 0;
     next if $ARGV[0] eq 'z' and $balance != 0;
 
     my $status;
-    if ($invs > $pmts) {
+    if ($paid == $tuition) {
+        $status = '*';
+    } elsif ($invs > $pmts) {
         $status = '-';
     } elsif ($pmts > $invs) {
         $status = '+';
@@ -53,7 +59,7 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
         die "I don't know how I got here\n";
     }
 
-    printf "%25s %9s %s %10s %s %10s %s %8s %s\n", $p->[1], $tuition, $plan, $owe, $invs, $paid, $pmts, $balance, $status;
+    printf "%21s %9s %s %10s %s %10s %s %8s %s\n", $name, $tuition, $plan, $owe, $invs, $paid, $pmts, $balance, $status;
 }
 
 sub get_totals {
