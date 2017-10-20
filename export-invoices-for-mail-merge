@@ -1,0 +1,10 @@
+#!/bin/bash
+
+MONTH=`/bin/date +%B | /usr/bin/perl -lne 'print lc'`;
+
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode tabs
+.headers on
+.output ${MONTH}-invoices.tsv
+select * from invoices where amount > 0 and invoice_date is null;
+EOS
