@@ -1,0 +1,37 @@
+#!/bin/bash
+
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(email) as Parents from parents;
+EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(first_name + last_name) as "Student-Classes" from students;
+EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(distinct(last_name)) as "Students" from students;
+EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(amount) as Adjustments, sum(amount) as Total from payments where type = 'adjustment';
+EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(amount) as Invoices, sum(debit) as Total from invoices;
+EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select count(amount) as Payments, sum(amount) as Total from payments where type != 'adjustment';
+EOS
