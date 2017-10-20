@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+use Modern::Perl '2017';
+use autodie;
+
+use DBI;
+use Math::Currency;
+
+Math::Currency->format('USD');
+
+my $DBFILE = 'sjm-2017-2018.sqlite';
+
+my $DBH = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $parents_st = qq{ select first_name, last_name, email, tuition, payment_schedule from parents; };
+my $parents = $DBH->prepare($parents_st);
+$parents->execute();
+
+my $invoice_total = $DBH->prepare(qq{ select sum(debit) from invoices where "Email Address" = ?; });
+my $payment_total = $DBH->prepare(qq{ select sum(amount) from payments where email = ? and validation is not null; });
+
+my $invoices = $DBH->prepare(qq{ select count(debit) from invoices where "Email Address" = ?; });
+my $payments = $DBH->prepare(qq{ select count(amount) from payments where email = ? and validation is not null; });
+
+$ARGV[0] //= '';
+
+no warnings;
+printf "%25s %9s %s %10s %s %10s %s %8s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S ];
+use warnings;
+foreach my $p ($parents->fetchall_arrayref()->@*) {
+    my $email = $p->[2];
+    my $plan = $p->[4];
+    my $tuition = Math::Currency->new($p->[3]);
+
+    my ($paid, $owe) = get_totals($email);
+    my $balance = $paid - $owe;
+
+    my ($pmts, $invs) = get_counts($email);
+
+    next if $ARGV[0] eq 'n' and ($balance >  0 or $balance == 0);
+    next if $ARGV[0] eq 'p' and ($balance <  0 or $balance == 0);
+    next if $ARGV[0] eq 'z' and $balance != 0;
+
+    my $status;
+    if ($invs > $pmts) {
+        $status = '-';
+    } elsif ($pmts > $invs) {
+        $status = '+';
+    } elsif ($pmts == $invs) {
+        $status = '=';
+    } else {
+        # Can't happen
+        die "I don't know how I got here\n";
+    }
+
+    printf "%25s %9s %s %10s %s %10s %s %8s %s\n", $p->[1], $tuition, $plan, $owe, $invs, $paid, $pmts, $balance, $status;
+}
+
+sub get_totals {
+    my $email = shift;
+
+    $invoice_total->execute($email);
+    $payment_total->execute($email);
+
+    my $owe  = Math::Currency->new( ($invoice_total->fetchrow_array())[0] );
+    my $paid = Math::Currency->new( ($payment_total->fetchrow_array())[0] );
+
+    return $paid, $owe;
+}
+
+sub get_counts {
+    my $email = shift;
+
+    $invoices->execute($email);
+    $payments->execute($email);
+
+    return $payments->fetchrow_array(), $invoices->fetchrow_array();
+}
