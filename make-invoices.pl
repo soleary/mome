@@ -109,8 +109,16 @@ sub get_balance {
 sub get_paypal_amount {
     my $cash = $_[0];
 
-    $cash += .30;
-    return $cash / ( 1 - .029 );
+    my %amounts = (
+        55.56 => Math::Currency->new(57.53),
+    );
+
+    if ($amounts{$cash->as_float}) {
+        return $amounts{$cash->as_float()};
+    } else {
+        $cash += .30;
+        return $cash / ( 1 - .029 );
+    }
 }
 
 sub prompt_for_schedules {
