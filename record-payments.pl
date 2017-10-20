@@ -49,6 +49,7 @@ while (1) {
     next unless $email;
 
     my %payment_types = (
+        a => { d => 'Adjustment' },
         p => { d => 'PayPal' },
         c => { d => 'Cash' },
         k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $r = <STDIN>); return "check $r";} },
