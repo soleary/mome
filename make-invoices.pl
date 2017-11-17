@@ -109,6 +109,7 @@ sub get_balance {
 sub get_paypal_amount {
     my $cash = $_[0];
 
+    # Amounts that get rounded to the wrong cent.
     my %amounts = (
         55.56 => Math::Currency->new(57.53),
     );
