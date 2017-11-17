@@ -48,11 +48,11 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $status;
     if ($paid == $tuition) {
         $status = '*';
-    } elsif ($invs > $pmts) {
+    } elsif ($owe > $paid) {
         $status = '-';
-    } elsif ($pmts > $invs) {
+    } elsif ($owe < $paid) {
         $status = '+';
-    } elsif ($pmts == $invs) {
+    } elsif ($owe == $paid) {
         $status = '=';
     } else {
         # Can't happen
