@@ -12,7 +12,7 @@ my $DBFILE = 'sjm-2017-2018.sqlite';
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-my $parents_st = qq{ select first_name, last_name, email, tuition, payment_schedule from parents; };
+my $parents_st = qq{ select first_name, last_name, email, tuition, payment_schedule from parents order by last_name; };
 my $parents = $dbh->prepare($parents_st);
 $parents->execute();
 
