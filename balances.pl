@@ -25,7 +25,7 @@ my $payments = $dbh->prepare(qq{ select count(amount) from payments where email 
 $ARGV[0] //= '';
 
 no warnings;
-printf "%21s %9s %s %10s %s %10s %s %8s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S ];
+printf "%21s %9s %s %10s %s %10s %s %8s %s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S Email ];
 use warnings;
 
 foreach my $p ($parents->fetchall_arrayref()->@*) {
@@ -59,7 +59,7 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
         die "I don't know how I got here\n";
     }
 
-    printf "%21s %9s %s %10s %s %10s %s %8s %s\n", $name, $tuition, $plan, $owe, $invs, $paid, $pmts, $balance, $status;
+    printf "%21s %9s %s %10s %s %10s %s %8s %s %s\n", $name, $tuition, $plan, $owe, $invs, $paid, $pmts, $balance, $status, $email;
 }
 
 sub get_totals {
