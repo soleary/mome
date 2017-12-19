@@ -9,13 +9,13 @@ echo
 sqlite3 sjm-2017-2018.sqlite << EOS
 .mode columns
 .headers on
-select count(first_name + last_name) as "Student-Classes" from students;
+select count(*) as "Student-Classes" from students;
 EOS
 echo
 sqlite3 sjm-2017-2018.sqlite << EOS
 .mode columns
 .headers on
-select count(distinct(last_name)) as "Students" from students;
+select count(distinct(first_name ||" "|| last_name)) as "Students" from students;
 EOS
 echo
 sqlite3 sjm-2017-2018.sqlite << EOS
