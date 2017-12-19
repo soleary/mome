@@ -6,5 +6,5 @@ echo "Enter to continue, ctrl+c to quit."
 read
 
 sqlite3 sjm-2017-2018.sqlite << EOS
-update invoices set invoice_date = date('now', 'localtime') where invoice_date is null;
+update invoices set invoice_date = date('now', 'localtime') where invoice_date is null and amount > 0;
 EOS
