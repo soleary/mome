@@ -25,8 +25,12 @@ my $date = Date::Simple->new($start);
 
 while ($date <= $end) {
     my $day = $date->day_of_week();
+
+    # No lessons on weekends
     next if $day == 0 or $day == 6;
+    # No lessons on off days
     next if grep { $_ == $date } @off_days;
+    # Beth will somtimes add Fridays as make up days
     next if $day == 5 and not grep { $_ == $date } @added_days;
 
     $days{$days[$day]}++;
