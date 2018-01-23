@@ -1,0 +1,3 @@
+#!/bin/bash
+
+{ ./list-payments ; ./list-invoices; } | grep -i $@ | sort
