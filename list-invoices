@@ -3,5 +3,5 @@
 sqlite3 sjm-2017-2018.sqlite << EOS
 .mode columns
 .headers on
-select first_name, last_name, parents.email, invoice_date, billing_date, amount, debit, paypal_amount from invoices join parents on parents.email = invoices."Email Address";
+select first_name, last_name, invoice_date, billing_date, amount, debit from invoices join parents on parents.email = invoices."Email Address";
 EOS
