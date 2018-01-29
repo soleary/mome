@@ -73,6 +73,9 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
 
     push @inv, $tuition, $plan, $total->as_float(), $total, $cash->as_float(), $paypal, $url, $DATE, $TESTING, $flag;
 
+    # Fix last name before writing invoice
+    $inv[1] =~ s/_\(\w+\)$//;
+
     $last_invoice->finish();
     $mk_invoice->execute(@inv) unless $DEBUG;
 }
