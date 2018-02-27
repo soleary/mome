@@ -4,7 +4,7 @@ create table invoices(
     ,"Email Address" text not null
     ,total_tuition text not null
     ,payment_plan text not null
-    .amount text not null,
+    ,amount text not null,
     ,debit text not null,
     ,cash_amount text not null
     ,paypal_amount text not null
