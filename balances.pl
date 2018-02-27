@@ -24,7 +24,7 @@ my $payments = $dbh->prepare(qq{ select count(amount) from payments where email 
 
 $ARGV[0] //= '';
 
-no warnings;
+no warnings 'qw';
 printf "%21s %9s %s %10s %s %10s %s %8s %s %s\n", qw[ Name Tuition P Invoiced # Paid # Balance S Email ];
 use warnings;
 
