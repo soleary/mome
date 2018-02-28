@@ -20,7 +20,7 @@ my $invoice_total = $dbh->prepare(qq{ select sum(debit) from invoices where "Ema
 my $payment_total = $dbh->prepare(qq{ select sum(amount) from payments where email = ? and validation is not null; });
 
 my $invoices = $dbh->prepare(qq{ select count(debit) from invoices where "Email Address" = ?; });
-my $payments = $dbh->prepare(qq{ select count(amount) from payments where email = ? and validation is not null; });
+my $payments = $dbh->prepare(qq{ select count(amount) from payments where email = ? and validation is not null and type != 'adjustment'; });
 
 $ARGV[0] //= '';
 
