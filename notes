@@ -22,5 +22,3 @@ Deal with changing tuition amount.  How?
 - Mark all old invoices as adjusted
 - Re-run current invoice with new balance (or adjust current invoice?)
 - Or do adjustment prior to calculating balance.
-
-A sanity checker - looks for parents with no transactions and transactions with no parents
