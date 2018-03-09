@@ -19,13 +19,10 @@ $parents->execute();
 my $invoice_total = $dbh->prepare(qq{ select sum(debit) from invoices where "Email Address" = ?; });
 my $payment_total = $dbh->prepare(qq{ select sum(amount) from payments where email = ? and validation is not null; });
 
-#my $total_tution = $dbh->prepare(qq{ select sum(tution) from parents; });
-#my $total_paymets = $dbh->prepare(qq{ select sum(amount) from payments where validation is not null; });
-
 $ARGV[0] //= '';
 
 no warnings 'qw';
-printf "%21s %9s %s %10s %10s %10s %s\n", qw[ Name Tuition P Invoiced Paid Payoff Email ];
+printf "%21s %9s %s %10s %10s %10s %10s %s\n", qw[ Name Tuition P Invoiced Paid Payoff Paypal Email ];
 use warnings;
 
 foreach my $p ($parents->fetchall_arrayref()->@*) {
@@ -38,11 +35,12 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
 
     my ($paid, $owe) = get_totals($email);
     my $payoff = $tuition - $paid;
+    my $paypal = get_paypal_amount($payoff);
 
     next if $ARGV[0] eq 'p' and $payoff <= 0;
     next if $ARGV[0] eq 'z' and $payoff > 0;
 
-    printf "%21s %9s %s %10s %10s %10s %s\n", $name, $tuition, $plan, $owe, $paid, $payoff, $email;
+    printf "%21s %9s %s %10s %10s %10s %10s %s\n", $name, $tuition, $plan, $owe, $paid, $payoff, $paypal, $email;
 }
 
 sub get_totals {
@@ -55,4 +53,21 @@ sub get_totals {
     my $paid = Math::Currency->new( ($payment_total->fetchrow_array())[0] );
 
     return $paid, $owe;
+}
+
+sub get_paypal_amount {
+    my $cash = $_[0];
+
+    # XXX: Terrible hack
+    # Amounts that get rounded to the wrong cent.
+    my %amounts = (
+        55.56 => Math::Currency->new(57.53),
+    );
+
+    if ($amounts{$cash->as_float}) {
+        return $amounts{$cash->as_float()};
+    } else {
+        $cash += .30;
+        return $cash / ( 1 - .029 );
+    }
 }
