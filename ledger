@@ -1,3 +1,8 @@
 #!/bin/bash
 
+#CHARS={#$@[0]}
+
 { ./list-payments ; ./list-invoices; } | grep -i $@ | sort
+echo
+{ ./balances.pl | head -n 1; ./balances.pl | grep -i $@; } | perl -pe 's/^\s+//'
+#echo $CHARS
