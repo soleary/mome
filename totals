@@ -35,3 +35,9 @@ sqlite3 sjm-2017-2018.sqlite << EOS
 .headers on
 select count(amount) as Payments, sum(amount) as Total from payments where type != 'adjustment';
 EOS
+echo
+sqlite3 sjm-2017-2018.sqlite << EOS
+.mode columns
+.headers on
+select sum(tuition) as "Total Tuition", printf("%.2f", sum(tuition) - (select sum(amount) from payments)) as "Total Outstanding" from parents;
+EOS
