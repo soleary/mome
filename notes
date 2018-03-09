@@ -15,3 +15,12 @@ Add text to email address
 It will not be sold or given to any third party."
 
 Deal with changing tuition amount.  How?
+
+- Add an adjusted field to invoices
+- Figure out the correct amount for this payment period.
+- Adjust all previous invoices to new amount
+- Mark all old invoices as adjusted
+- Re-run current invoice with new balance (or adjust current invoice?)
+- Or do adjustment prior to calculating balance.
+
+A sanity checker - looks for parents with no transactions and transactions with no parents
