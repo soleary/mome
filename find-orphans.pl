@@ -12,22 +12,22 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 # Key tables
 # Each email address should occur at least once in each.
 # If they aren't something is lost and will need to be linked.
-my @list = (
+my @lists = (
     qq{ select distinct email from parents; },
     qq{ select distinct "Email Address" from invoices; },
     qq{ select distinct email from payments; },
 );
 
-@list = map { $dbh->prepare($_) } @list;
+@lists = map { $dbh->prepare($_) } @lists;
 
 my %counts = ();
-foreach my $sth (@list) {
-    my $x = $dbh->selectcol_arrayref($sth);
+foreach my $sth (@lists) {
+    my $addrs = $dbh->selectcol_arrayref($sth);
 
-    map { $counts{$_}++ } $x->@*;
+    map { $counts{$_}++ } $addrs->@*;
 }
 
-my @orphans = grep { $counts{$_} < @list } sort keys %counts;
+my @orphans = grep { $counts{$_} < @lists } sort keys %counts;
 
 if (@orphans) {
     print "Found these orphans:\n";
