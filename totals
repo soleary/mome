@@ -39,5 +39,5 @@ echo
 sqlite3 sjm-2017-2018.sqlite << EOS
 .mode columns
 .headers on
-select sum(tuition) as "Total Tuition", printf("%.2f", sum(tuition) - (select sum(amount) from payments)) as "Total Outstanding" from parents;
+select sum(tuition) as "Total Tuition", printf("%.2f", sum(tuition) - (select sum(amount) from payments)) as "Total Owed" from parents;
 EOS
