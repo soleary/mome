@@ -37,7 +37,7 @@ my $payment_total = $DBH->prepare(qq{ select sum(amount) from payments where ema
 
 my $last_invoice = $DBH->prepare(qq{ select total_tuition, payment_plan from invoices where "Email Address" = ? order by billing_date desc; });
 
-printf "%25s, %9s %s %8s %7s %8s %8s %7s\n", qw[ Name Tuition P Balance Bill Total Paypal Fee ] if $DEBUG;
+printf "%25s %9s %s %8s %7s %8s %8s %7s\n", qw[ Name Tuition P Balance Bill Total Paypal Fee ] if $DEBUG;
 foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $email = $p->[2];
     my $plan = $p->[4];
@@ -67,7 +67,7 @@ foreach my $p ($parents->fetchall_arrayref()->@*) {
     my $paypal = get_paypal_amount($total);
     my $url = $BASE_URL . $paypal->as_float();
 
-    printf "%25s, %9s %s %8s %7s %8s %8s %7s\n", $p->[1], $tuition, $plan, $balance, $cash, $total, $paypal, $paypal - $total if $DEBUG;
+    printf "%25s %9s %s %8s %7s %8s %8s %7s\n", $p->[1], $tuition, $plan, $balance, $cash, $total, $paypal, $paypal - $total if $DEBUG;
 
     my @inv = @{$p}[0..2];
 
