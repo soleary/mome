@@ -92,8 +92,8 @@ sub check_last_invoice {
 
     return '' unless $inv;
 
-    return $inv->{total_tuition} != $old_tuition or
-           $inv->{payment_plan}  != $old_plan;
+    return ($inv->{total_tuition} != $old_tuition or
+            $inv->{payment_plan}  != $old_plan);
 }
 
 sub get_balance {
