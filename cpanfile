@@ -1,3 +1,4 @@
+requires "perl"                      => '5.28.0';
 requires "Net::Google::DataAPI"      => "0.2805";
 requires "Net::Google::Spreadsheets" => "0.1501";
 requires "Storable"                  => "3.08";
