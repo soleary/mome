@@ -1,7 +1,0 @@
-#!/bin/bash
-
-sqlite3 sjm-2017-2018.sqlite << EOS
-.mode columns
-.headers on
-select first_name, last_name, date, type, amount, deposited from payments join parents on parents.email = payments.email;
-EOS
