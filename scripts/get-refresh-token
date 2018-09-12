@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+use JSON::MaybeXS;
+use Net::Google::DataAPI::Auth::OAuth2;
+use Net::Google::Spreadsheets;
+use Perl6::Slurp;
+use Storable;
+
+my $client_credentials = decode_json(slurp('billing-client-auth.json'));
+my $session_filename = "billing-client-token";
+
+my $oauth2 = Net::Google::DataAPI::Auth::OAuth2->new(
+    client_id => $client_credentials->{installed}{client_id},
+    client_secret =>$client_credentials->{installed}{client_secret},
+    scope => ['http://spreadsheets.google.com/feeds/'],
+    redirect_uri => 'http://localhost/authorize/',
+);
+
+# We need to set these parameters this way in order to ensure
+# that we get not only an access token, but also a refresh token
+# that can be used to update it as needed.
+my $url = $oauth2->authorize_url(
+    access_type => 'offline',
+    approval_prompt => 'force'
+);
+
+# Give the user instructions on what to do:
+print <<END
+
+The following URL can be used to obtain an access token from
+Google.
+
+1. Copy the URL and paste it into a browser.
+
+2.  You may be asked to log into your Google account if you
+were not logged in already in that browser.  If so, go
+ahead and log in to whatever account you want to have
+access to the Google doc.
+
+3. On the next page, click "Accept" when asked to grant access.
+
+4.  You will then be redirected to a page with a box in the
+left-hand column labeled  "Authorization code".
+Copy the code in that box and come back here.
+
+Here is the URL to paste in your browser to get the code:
+
+$url
+
+Once you have the code, press <ENTER> and your editor will open
+and you can enter the code.
+END
+;
+
+<>;  # Continue after readline
+my $code = `echo "Replace this text with the code" | vipe | cat`;
+
+# Exchange the code for an access token:
+my $token = $oauth2->get_access_token($code) or die;
+
+# If we get to here, it worked!  Report success:
+print "\nToken obtained successfully!n";
+print "Here are the token contents (just FYI):\n\n";
+print $token->to_string, "\n";
+
+# Save the token for future use:
+my $session = $token->session_freeze;
+store($session, $session_filename);
+
+print <<END2
+
+Token successfully stored in file $session_filename
+
+Use that filename in your spreadsheet-access script to
+load the token as needed for access to the spreadsheet data.
+
+END2
+
