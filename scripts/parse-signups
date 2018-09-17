@@ -1,0 +1,221 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl qw/2018/;
+use DBI;
+use Data::Dumper;
+
+use lib qw/lib/;
+
+use MOME;
+
+my $DBFILE = 'sjsmusic.db';
+
+my $service = MOME::google_sheets();
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+my $fam_sth = $dbh->prepare( qq { insert into family_member (momefid, personid) values (?,?); });
+
+# Propmt to change the active session
+
+my $spreadsheet = $service->spreadsheet(
+    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
+);
+
+my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
+
+my @rows = $worksheet->rows;
+
+sub delete_momefid {
+    my $momefid = $_[0];
+
+    my @sts = (
+        qq{ delete from class_member where personid in (select personid from family_member where momefid = ?); },
+        qq{ delete from person where id in ( select personid from family_member where momefid = ?); },
+        qq{ delete from family_member where momefid = ?; },
+        qq{ delete from family where momefid = ?; },
+    );
+
+    my @rets = ();
+    foreach my $st (@sts) {
+        push @rets, $dbh->do($st, {}, [ $momefid ]);
+    }
+}
+
+# Clean out the databse so we can import cleanly without duping this session.
+# Clean out the class memberships
+#$dbh->do(qq{
+#    delete from class_member where personid in
+#        (select personid from family_member where momefid in
+#        (select momefid from family where session =
+#        (select id from session where active is not null)));
+#});
+#
+## Clean out entries in people
+#$dbh->do(qq{
+#    delete from person where id in
+#        (select personid from family_member where momefid in
+#        (select momefid from family where session =
+#        (select id from session where active is not null)));
+#});
+#
+## Clean out family_members
+#$dbh->do(qq{
+#    delete from family_member where momefid in
+#        (select momefid from family where session =
+#        (select id from session where active is not null));
+#});
+#
+## Clean out families
+#$dbh->do(qq{ delete from family where session = (select id from session where active is not null); });
+#die;
+
+sub clean_phone {
+    return undef unless $_[0];
+    $_ = $_[0];
+
+    s/\D//g;
+    s/^1//g;
+    /(\d{3})(\d{3})(\d{4})/;
+
+    return "$1-$2-$3";
+}
+
+sub write_parent {
+    my $x = 0;
+    my @fields = qw/ momefid first last email phone /;
+    my %rec = map { $_ => $_[$x++] } @fields;
+    my @in_fields = qw/ first last email phone /;
+
+    $rec{phone} = clean_phone($rec{phone});
+
+    my $in_sth = $dbh->prepare_cached(
+        qq{ insert into person ( type, firstname, lastname, email, phone ) values (?,?,?,?,?); }
+    );
+
+    $in_sth->execute( 'parent', map{ce($_)} @rec{@in_fields} );
+    my $id = $dbh->last_insert_id('','', 'person', 'id');
+
+    $fam_sth->execute($rec{momefid}, $id);
+}
+
+sub write_family {
+    my $momefid = $_[0];
+
+    my $names_sth = $dbh->prepare_cached(
+        qq{ select distinct(lastname) from person where id in ( select personid from family_member where momefid = ?); }
+    );
+
+    $names_sth->execute($momefid);
+
+    my @names = map { $_->[0] } @{ $names_sth->fetchall_arrayref() };
+    my $family_name = join ' / ', @names;
+
+    my $family_sth = $dbh->prepare_cached(
+        qq{ insert into family ( momefid, name, session ) values (?, ?, (select id from session where active is not null)); }
+    );
+
+    $family_sth->execute($momefid, $family_name);
+}
+
+sub write_student {
+    my $x = 0;
+    my @fields = qw/ momefid first last grade /;
+    my %rec = map { $_ => $_[$x++] } @fields;
+    my @in_fields = qw/ first last grade /;
+
+    my $in_sth = $dbh->prepare_cached(
+        qq{ insert into person ( type, firstname, lastname, grade ) values (?,?,?,?); }
+    );
+
+    $in_sth->execute( 'student', map{ce($_)} @rec{@in_fields} );
+    my $id = $dbh->last_insert_id('','', 'person', 'id');
+
+    $fam_sth->execute($rec{momefid}, $id);
+
+    return $id;
+}
+
+sub write_instrument {
+    my @rec;
+    push @rec, $_[0];
+    push @rec, split(/\s-\s/, $_[1], 2);
+    push @rec, $_[2];
+
+    my $x = 0;
+    my @fields = qw/ studentid class instrument experience /;
+    my %rec = map { $_ => $rec[$x++] } @fields;
+    #my @in_fields = qw/ first last email phone /;
+
+    if ($rec{class} eq 'Ukulele') {
+        $rec{instrument} = 'Ukulele';
+    }
+
+    my $class_sth = $dbh->prepare_cached(
+        qq{ insert into class_member ( personid, name, instrument, experience ) values (?,?,?,?); }
+    );
+
+    $class_sth->execute(map{ce($_)} @rec{@fields});
+}
+
+sub ce {
+    return undef unless defined $_[0];
+    return undef if $_[0] eq '';
+    return $_[0];
+}
+
+# Get my rownames and then ditch the row they are in
+my %f = reverse %{$rows[0]->content};
+pop @rows;
+
+my @parent_fields = qw/ first last email phone /;
+my @student_fields = qw/ first last grade /;
+my @instrument_fields = qw/ ins years /;
+
+my @out = ();
+foreach my $row (@rows) {
+    if ($row->content->{$f{testing}}) {
+        next;
+    }
+
+    my %row = map { s/^\s+//; s/\s+$//; $_ } %{$row->content};
+
+    my $momefid = $row{$f{momefid}};
+
+    next unless $momefid;
+
+    delete_momefid($momefid);
+    next;
+
+    foreach my $pn (1..4) {
+        my @pfields = map { 'p' . $pn  . $_ } @parent_fields;
+
+        if (grep { /\w/ } @row{ @f{@pfields} }) {
+            write_parent( $momefid, @row{ @f{@pfields} } );
+        }
+    }
+
+    foreach my $sn (1..3) {
+        my @sfields = map { 's' . $sn . $_ } @student_fields;
+
+        my $sid;
+        if (grep { /\w/ } @row{ @f{@sfields} }) {
+            $sid = write_student($momefid, @row{ @f{@sfields} });
+        } else {
+            next;
+        }
+
+        foreach my $in (1..3) {
+            my @ifields = map { 's' . $sn . $_ . $in } @instrument_fields;
+
+            if (grep { /\w/ } @row{ @f{@ifields} }) {
+                write_instrument($sid, @row{ @f{@ifields} } );
+            } else {
+                next;
+            }
+        }
+    }
+    write_family($momefid);
+}
