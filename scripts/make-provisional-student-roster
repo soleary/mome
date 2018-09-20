@@ -41,7 +41,6 @@ foreach my $row (@rows) {
             my @fields = (@sfields, @infields);
 
             if (grep { /\w/ } @row{ @f{@infields} }) {
-                #print Dumper [ map{ split / - / } @row{ @f{@fields} } ];
                 push @out, [ map{ split / - / } @row{ @f{@fields} } ];
             } else {
                 next;
@@ -73,24 +72,12 @@ foreach my $row (@out) {
 
     $row->[5] = '' unless defined $row->[5];
 
-    print Dumper $row;
-    next;
-
-    # Grade 2
-    # Group 3
-
     if ($row->[3] eq 'Band' and $row->[2] > 5) {
         $row->[3] = 'Advnaced Band';
     }
 
     my $x = 1;
     my @row = map { { row => $y, col => $x++, input_value => $_ } } $row->@*;
-
-    #print Dumper \@row;
     $o->batchupdate_cell( @row );
     $y++;
-    #my %r = ();
-    #@r{@out_fields} = $row->@*;
-
-    #$o->add_row( { %r } );
 }
