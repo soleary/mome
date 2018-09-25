@@ -896,6 +896,32 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       perl 5.006
+  Math-Currency-0.52
+    pathname: M/MS/MSCHOUT/Math-Currency-0.52.tar.gz
+    provides:
+      Math::Currency 0.52
+      Math::Currency::EUR 0.52
+      Math::Currency::GBP 0.52
+      Math::Currency::JPY 0.52
+      Math::Currency::USD 0.52
+      Math::Currency::de_DE 0.52
+      Math::Currency::en_GB 0.52
+      Math::Currency::en_US 0.52
+      Math::Currency::ja_JP 0.52
+    requirements:
+      Encode 0
+      Encode::Locale 0
+      Exporter 0
+      ExtUtils::MakeMaker 0
+      Math::BigFloat 1.60
+      POSIX 0
+      Test::More 0.94
+      base 0
+      overload 0
+      perl 5.008
+      strict 0
+      utf8 0
+      warnings 0
   Module-Build-0.4224
     pathname: L/LE/LEONT/Module-Build-0.4224.tar.gz
     provides:
