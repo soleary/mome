@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DB="sjsmusic.db"
+SQL="sjsmusic.sql"
+DATE=`date +%F--%T | perl -lpe 's/:/-/g'`
+
+if [ -z $@ ]
+then
+    DIR="backup/$DATE"
+else
+    DIR="backup/$DATE-$@"
+fi
+
+mkdir $DIR
+sqlite3 $DB ".backup $DIR/$DB"
+sqlite3 $DB .dump > $DIR/$SQL
