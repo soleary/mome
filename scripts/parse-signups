@@ -11,12 +11,12 @@ use lib qw/lib/;
 
 use MOME;
 
+my $SAFE = 1;
 my $DBFILE = 'sjsmusic.db';
 
 my $service = MOME::google_sheets();
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
-my $fam_sth = $dbh->prepare( qq { insert into family_member (momefid, personid) values (?,?); });
 
 # Propmt to change the active session
 
@@ -26,51 +26,25 @@ my $spreadsheet = $service->spreadsheet(
 
 my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
 
+my $fam_sth = $dbh->prepare( qq { insert into family_member (momefid, personid) values (?,?); });
+
 my @rows = $worksheet->rows;
 
 sub delete_momefid {
     my $momefid = $_[0];
 
     my @sts = (
-        qq{ delete from class_member where personid in (select personid from family_member where momefid = ?); },
-        qq{ delete from person where id in ( select personid from family_member where momefid = ?); },
-        qq{ delete from family_member where momefid = ?; },
-        qq{ delete from family where momefid = ?; },
+        qq{ delete from class_member where personid in (select personid from family_member where momefid = $momefid); },
+        qq{ delete from person where id in ( select personid from family_member where momefid = $momefid); },
+        qq{ delete from family_member where momefid = $momefid; },
+        qq{ delete from family where momefid = $momefid; },
     );
 
     my @rets = ();
     foreach my $st (@sts) {
-        push @rets, $dbh->do($st, {}, [ $momefid ]);
+        push @rets, $dbh->do($st);
     }
 }
-
-# Clean out the databse so we can import cleanly without duping this session.
-# Clean out the class memberships
-#$dbh->do(qq{
-#    delete from class_member where personid in
-#        (select personid from family_member where momefid in
-#        (select momefid from family where session =
-#        (select id from session where active is not null)));
-#});
-#
-## Clean out entries in people
-#$dbh->do(qq{
-#    delete from person where id in
-#        (select personid from family_member where momefid in
-#        (select momefid from family where session =
-#        (select id from session where active is not null)));
-#});
-#
-## Clean out family_members
-#$dbh->do(qq{
-#    delete from family_member where momefid in
-#        (select momefid from family where session =
-#        (select id from session where active is not null));
-#});
-#
-## Clean out families
-#$dbh->do(qq{ delete from family where session = (select id from session where active is not null); });
-#die;
 
 sub clean_phone {
     return undef unless $_[0];
@@ -90,6 +64,7 @@ sub write_parent {
     my @in_fields = qw/ first last email phone /;
 
     $rec{phone} = clean_phone($rec{phone});
+    $rec{email} = lc $rec{email};
 
     my $in_sth = $dbh->prepare_cached(
         qq{ insert into person ( type, firstname, lastname, email, phone ) values (?,?,?,?,?); }
@@ -102,22 +77,27 @@ sub write_parent {
 }
 
 sub write_family {
-    my $momefid = $_[0];
+    my $x = 0;
+    my @fields = qw/ momefid tuition permission plan /;
+    my %rec = map { $_ => $_[$x++] } @fields;
+    my @in_fields = qw/ momefid family_name tuition plan permission /;
 
     my $names_sth = $dbh->prepare_cached(
         qq{ select distinct(lastname) from person where id in ( select personid from family_member where momefid = ?); }
     );
-
-    $names_sth->execute($momefid);
-
+    $names_sth->execute($rec{momefid});
     my @names = map { $_->[0] } @{ $names_sth->fetchall_arrayref() };
-    my $family_name = join ' / ', @names;
+    $rec{family_name} = join ' / ', @names;
+
+    ($rec{permission}) = map { lc } $rec{permission} =~ /^(\w+)/;
+    ($rec{plan}) = $rec{plan} =~ /^(\d)/;
 
     my $family_sth = $dbh->prepare_cached(
-        qq{ insert into family ( momefid, name, session ) values (?, ?, (select id from session where active is not null)); }
+        qq{ insert into family ( momefid, name, tuition, plan, permission, session ) values (?, ?, ?, ?, ?,
+            (select id from session where active is not null)); }
     );
 
-    $family_sth->execute($momefid, $family_name);
+    $family_sth->execute( map{ce($_)}@rec{@in_fields});
 }
 
 sub write_student {
@@ -139,27 +119,59 @@ sub write_student {
 }
 
 sub write_instrument {
+
+    # Ukulele was put in siginup sheet without a class, so no
+    # hypen in the 3rd record, which messes up our parsing
+    # and hash creation later.
+    if ($_[2] !~ /-/) {
+        $_[2] = 'Ukulele Ministry - Ukulele';
+    }
+
     my @rec;
-    push @rec, $_[0];
-    push @rec, split(/\s-\s/, $_[1], 2);
-    push @rec, $_[2];
+    push @rec, $_[0], $_[1];
+    push @rec, split(/\s-\s/, $_[2], 2);
+    push @rec, $_[3];
 
     my $x = 0;
-    my @fields = qw/ studentid class instrument experience /;
+    my @fields = qw/ studentid grade class instrument experience /;
     my %rec = map { $_ => $rec[$x++] } @fields;
-    #my @in_fields = qw/ first last email phone /;
+    my @in_fields = qw/ studentid class instrument experience day /;
 
-    if ($rec{class} eq 'Ukulele') {
-        $rec{instrument} = 'Ukulele';
+    my $grade = $rec{grade};
+    my $class = $rec{class};
+    my $instrument = $rec{instrument};
+
+    if ($class eq 'Ukulele') {
+        $instrument = 'Ukulele';
+        $class = 'Ukulele Ministry';
+    }
+
+    if ($class eq 'Band' and $grade > 5) {
+        $class = 'Advanced Band';
+    }
+
+    if ($class eq 'Orchestra' or $instrument eq 'Ukulele') {
+        $rec{day} = 'Monday';
+    } elsif ($class eq 'Advanced Band') {
+        $rec{day} = 'Tuesday';
+    } elsif ($class eq 'Band' and $grade eq '4') {
+        $rec{day} = 'Wednesday';
+    } elsif ($class eq 'Band' and $grade eq '5') {
+        $rec{day} = 'Thursday';
+    } elsif ($class eq 'Jazz Band') {
+        $rec{day} = 'Tuesday';
+    } else {
+        warn 'How did we get here, excatly?';
     }
 
     my $class_sth = $dbh->prepare_cached(
-        qq{ insert into class_member ( personid, name, instrument, experience ) values (?,?,?,?); }
+        qq{ insert into class_member ( personid, class, instrument, experience, day ) values (?,?,?,?,?); }
     );
 
-    $class_sth->execute(map{ce($_)} @rec{@fields});
+    $class_sth->execute(map{ce($_)} @rec{@in_fields});
 }
 
+# Clean element
 sub ce {
     return undef unless defined $_[0];
     return undef if $_[0] eq '';
@@ -173,8 +185,8 @@ pop @rows;
 my @parent_fields = qw/ first last email phone /;
 my @student_fields = qw/ first last grade /;
 my @instrument_fields = qw/ ins years /;
+my @fixed_fields = qw/ momefid tuition permission plan /;
 
-my @out = ();
 foreach my $row (@rows) {
     if ($row->content->{$f{testing}}) {
         next;
@@ -183,11 +195,13 @@ foreach my $row (@rows) {
     my %row = map { s/^\s+//; s/\s+$//; $_ } %{$row->content};
 
     my $momefid = $row{$f{momefid}};
-
     next unless $momefid;
 
-    delete_momefid($momefid);
-    next;
+    if ($SAFE) {
+        next;
+    } else {
+        delete_momefid($momefid);
+    }
 
     foreach my $pn (1..4) {
         my @pfields = map { 'p' . $pn  . $_ } @parent_fields;
@@ -200,6 +214,7 @@ foreach my $row (@rows) {
     foreach my $sn (1..3) {
         my @sfields = map { 's' . $sn . $_ } @student_fields;
 
+        # Make the student's database ID availabe to write_instrument
         my $sid;
         if (grep { /\w/ } @row{ @f{@sfields} }) {
             $sid = write_student($momefid, @row{ @f{@sfields} });
@@ -207,15 +222,18 @@ foreach my $row (@rows) {
             next;
         }
 
+        # Make grade available to write_instrument
+        my $grade = $row{ $f{'s' . $sn . 'grade'} };
+
         foreach my $in (1..3) {
             my @ifields = map { 's' . $sn . $_ . $in } @instrument_fields;
 
             if (grep { /\w/ } @row{ @f{@ifields} }) {
-                write_instrument($sid, @row{ @f{@ifields} } );
+                write_instrument($sid, $grade, @row{ @f{@ifields} } );
             } else {
                 next;
             }
         }
     }
-    write_family($momefid);
+    write_family(@row{@f{@fixed_fields}});
 }
