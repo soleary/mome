@@ -1,0 +1,177 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use autodie;
+
+use DBI;
+use Term::ReadKey;
+use DateTime;
+use Data::Dumper;
+
+$|++;
+
+my $TESTING = undef;
+
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $search_sth = $dbh->prepare(
+    qq{ select email, firstname, lastname, id from person where
+            firstname like ? or lastname like ? or email like ?; }
+);
+
+say "This is live fire" unless $TESTING;
+
+while (1) {
+    print "Search term: ";
+
+    my $term = <STDIN>;
+    chomp $term;
+
+    last if $term =~ /^q$/i;
+    next if $term eq '';
+
+    my @terms = ("%$term%") x 3;
+
+    $search_sth->execute(@terms);
+
+    my @search = $search_sth->fetchall_arrayref()->@*;
+
+    if (@search == 0) {
+        print "No results returned.\n";
+        next;
+    }
+
+    my $old_person = prompt('Select existing family member:', build_parent_hash(@search));
+
+    next unless $old_person;
+
+    my @new_person = ();
+
+    my %person_types = (
+        p => { d => 'Parent' },
+        s => { d => 'Student' },
+        y => { d => 'Payer' },
+    );
+
+    push @new_person, @{prompt('Person type:', %person_types)}[0];
+
+    foreach my $f (qw/First Last Email Phone Address Grade/) {
+        push @new_person, simple_prompt("$f: ");
+    }
+
+    say "Person OK?";
+    print join ' ', map { defined ? $_ : '' } @new_person;
+    print "[Y/N]: ";
+    chomp( my $resp = <STDIN> );
+
+    next unless $resp =~ /y/i;
+
+    add_family_member($old_person->[-1], @new_person);
+}
+
+sub get_momefid {
+    my $mfid_sth = $dbh->prepare_cached(qq{ select momefid from family_member where personid = ? });
+
+    $mfid_sth->execute($_[0]);
+    my @momefid = $mfid_sth->fetchrow_array();
+    $mfid_sth->finish();
+
+    return $momefid[0];
+}
+
+sub add_family_member {
+    my $old_id = shift;
+    my @person = @_;
+
+    my $momefid = get_momefid($old_id);
+
+    my $in_sth = $dbh->prepare(
+        qq{ insert into person ( type, firstname, lastname, email, phone, address, grade, testing ) values (?,?,?,?,?,?,?,?); }
+    );
+
+    $in_sth->execute(@person, $TESTING);
+    my $id = $dbh->last_insert_id('','', 'person', 'id');
+
+    my $fam_sth = $dbh->prepare( qq { insert into family_member (momefid, personid, testing) values (?,?,?); });
+    $fam_sth->execute($momefid, $id, $TESTING);
+}
+
+sub simple_prompt {
+    my $string = shift;
+
+    print "$string";
+    chomp( my $resp = <STDIN> );
+
+    return $resp or undef;
+}
+
+sub prompt {
+    my $prompt = shift;
+
+    # Takes a hash of things to pick from.
+    # Each entry in the hash must have a value for {d}.
+    # You have the right to a {v}.  If you cannot afford one,
+    # one will be appointed to you by the court.
+    #
+    # $hash{$key}{d} = The string to display in the prompt
+    # $hash{$key}{v} = The value to be returned by this sub if this item is selected
+    # $hash{$key}{c} = Optional code reference to be run if this item is selected
+    #                  The data in {v} will be passed into this coderef and it's
+    #                  result returned by this sub
+    #
+
+    # Don't actually prompt if there's only one value
+    if (@_ == 2) {
+        return $_[1]->{v};
+    }
+
+    my %items = @_;
+
+    # Make up a {v} value if one isn't supplied
+    foreach my $k (keys %items) {
+        next if $items{$k}{v};
+        $items{$k}{v} = [ lc $items{$k}{d} ];
+    }
+
+    ReadMode 4;
+
+    my $key;
+    do {
+        say $prompt;
+        foreach my $k (sort keys %items) {
+            printf "%2s. %s\n", $k, $items{$k}{d};
+        }
+        print "? ";
+        while (not defined ($key = ReadKey(-1))) {}
+    } until
+        ($items{$key}{v} or $key eq 'q');
+
+    print "\n";
+
+    ReadMode 0;
+
+    if ($items{$key}{c}) {
+        return $items{$key}{c}->($items{$key}{v});
+    }
+
+    return $items{$key}{v};
+}
+
+sub build_parent_hash {
+    my @rents = @_;
+
+    my %values = ();
+
+    my $i;
+    foreach my $rent (@rents) {
+        $i++;
+        $values{$i}{d} = sprintf '%-28s %s %s', $rent->@*;
+        $values{$i}{v} = [ $rent->@* ];
+    }
+
+    return %values;
+}
