@@ -1,0 +1,230 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+use DBI;
+use DateTime;
+
+use lib 'lib';
+
+use MOME;
+
+my $TESTING = 1;
+# Number of days one has to make a payment
+my $PAYMENT_INTERVAL = 5;
+my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $dt = DateTime->now();
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet({title => 'Invoices'});
+my $invoice_sheet = $spreadsheet->worksheet({title => 'Mail Merge'});
+
+sub paypal_amount {
+    my $cash = $_[0];
+
+    $cash += .30;
+    return sprintf "%.2f", $cash / ( 1 - .029 );
+}
+
+sub paypal_url {
+    my $amount = $_[0];
+
+    return "$PAYPAL_BASE$amount";
+}
+
+sub get_parents {
+    my $id = $_[0];
+
+    my $parent_st = qq{ select firstname, lastname, email, id as personid from person where
+                type = 'parent' and
+                email is not null and
+                id in (select personid from family_member where momefid = ?)};
+
+    my $parent_sth = $dbh->prepare_cached($parent_st);
+    $parent_sth->execute($id);
+
+    my @fields = qw/ first last email /;
+    my @parents = ();
+
+    my $row;
+    while ( $row = $parent_sth->fetchrow_hashref() ) {
+        push @parents, $row;
+    }
+    $parent_sth->finish();
+
+    return @parents;
+}
+
+sub today {
+    my $dt = DateTime->now();
+    $dt->subtract( days => 1); #XXX: HACK!
+    return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
+    #return @{$dbh->selectrow_arrayref(qq{ select date('now','localtime'); })}[0];
+}
+
+sub payment_date {
+    my $dt = DateTime->now();
+    $dt->subtract( days => 1 );  #XXX: HACK!
+    $dt->add(days       => $PAYMENT_INTERVAL);
+    return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
+    #return @{$dbh->selectrow_arrayref(qq{ select date('now', '+5 days', 'localtime'); })}[0];
+}
+
+sub format_day {
+    my $num = shift;
+
+    my $suffix = '';
+    for ($num) {
+        if (/^11$/) { $suffix = 'th'; last; }
+        if (/^12$/) { $suffix = 'th'; last; }
+        if (/^13$/) { $suffix = 'th'; last; }
+        if (/1$/)   { $suffix = 'st'; last; }
+        if (/2$/)   { $suffix = 'nd'; last; }
+        if (/3$/)   { $suffix = 'rd'; last; }
+        default { $suffix .= 'th' }
+    }
+
+    return $num . $suffix;
+}
+
+sub this_month {
+    return @{$dbh->selectrow_arrayref(qq{ select date('now', localtime'); })}[0] =~ s/-\d\{2\}$//;
+}
+
+sub payment_word {
+    return "payment" if $_[0] == 1;
+    return "payments";
+}
+
+sub record_to_db {
+    my %i = @_;
+
+    my $inv_sth = $dbh->prepare_cached(qq{
+        insert into invoice
+            (personid, amount, paypal, date, duedate, testing, session)
+            values (?,?,?,?,?,?,(select id from session where active is not null));
+    });
+
+    $inv_sth->execute($i{personid}, $i{balance}, $i{paypal}, $i{invoice_dt}->ymd(), $i{payment_dt}->ymd(), $TESTING);
+}
+
+my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachments', 'Scheduled Date', 'Mail Merge Status');
+my @out_fields = (@email_fields, qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /);
+
+my $x = 1;
+my @title_row = map { { row => 1, col => $x++, input_value => $_ } } @out_fields;
+$invoice_sheet->batchupdate_cell( @title_row );
+my $y = 2;
+
+my %emails_seen = ();
+
+sub invoice_to_google {
+    my $a = $_[0];
+
+    # Balances will be negative, since these are people that owe
+    # But we don't want to show people that on their invoice
+    $a->{balance} =~ s/^-//;
+    $a->{balance} = sprintf '%.2f', $a->{balance};
+    $a->{paypal} = paypal_amount $a->{balance};
+    $a->{paypal_url} = paypal_url $a->{paypal};
+    $a->{payment_word} = payment_word $a->{plan};
+    ($a->{invoice_dt}, $a->{invoice_date}) = today();
+    ($a->{payment_dt}, $a->{payment_date}) = payment_date $a->{invoice_date};
+    $a->{tuition} = sprintf '%.2f', $a->{tuition};
+    my @parents = get_parents $a->{momefid};
+
+    foreach my $parent (@parents) {
+        if ($emails_seen{$parent->{email}}++) {
+            next;
+        }
+
+        #record_to_db(%{$a}, %{$parent});
+
+        my $x = 1;
+        my @row = ();
+        my @more_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
+        # $tuition, $plan, $total->as_float(), $total, $cash->as_float(), $paypal, $url, $DATE, $TESTING, $flag;
+
+        # Parent info for invoice
+        foreach my $f (qw/ firstname lastname email /){
+            push @row, $parent->{$f};
+        }
+
+        # Blank columns to appease the mail merge app
+        foreach my $n (1..3) {
+            push @row, undef;
+        }
+
+        # Additional fields for invoice template
+        foreach my $f (@more_fields) {
+            push @row, $a->{$f};
+        }
+
+        my @sheet_row = map { { row => $y, col => $x++, input_value => ce($_) } } @row;
+        $invoice_sheet->batchupdate_cell( @sheet_row );
+
+        $y++;
+    }
+}
+
+sub ce {
+    return '' unless $_[0];
+    return $_[0];
+}
+
+sub get_account {
+    my $momefid = $_[0];
+
+    my $a = $dbh->selectrow_hashref(
+        qq{ select momefid, tuition, plan, name, nobill from family where momefid = ?; },
+        undef,
+        $momefid,
+    );
+
+    ($a->{short_name}) = split '/', $a->{name};
+
+    return $a;
+}
+
+sub get_balance {
+    my $momefid = $_[0];
+
+    my $count = $dbh->selectrow_hashref(
+        qq{ select count(id) as count from ledger where type = 'debit' and momefid = ? },
+        undef,
+        $momefid,
+    );
+
+    unless ($count->{count}) {
+        return 0, 0;
+    }
+
+    my $balance = $dbh->selectrow_hashref(
+        qq{ select sum(amount) as balance from ledger where momefid = ?; },
+        undef,
+        $momefid,
+    );
+
+    return $balance->{balance}, $count->{count};
+}
+
+my @ids = $dbh->selectall_array(
+    qq{ select momefid from family where session = (select id from session where active is not null); }
+);
+
+foreach my $id (@ids) {
+    my $a = get_account($id->[0]);
+    ($a->{balance}, $a->{count}) = get_balance($id->[0]);
+
+    if ($a->{balance} < 0) {
+        invoice_to_google($a);
+    }
+}
