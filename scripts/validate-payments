@@ -1,0 +1,41 @@
+#!/usr/bin/env perl
+
+use Modern::Perl '2017';
+use autodie;
+
+use DBI;
+
+my $DBFILE = 'sjsmusic.db';
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $payments = $dbh->prepare(q{
+    select l.momefid, f.name, l.type, l.checknum, l.amount, l.id
+        from ledger as l, family as f
+        where validated is null
+            and type != 'debit'
+            and l.momefid = f.id
+            order by l.id;
+});
+
+$payments->execute();
+
+my $validate = $dbh->prepare('update ledger set validated = 1 where id = ?');
+
+while ( my $payment = $payments->fetch() ) {
+
+    foreach my $e ($payment->@*) {
+        $e = '' unless defined $e;
+    }
+
+    printf "%3d %15s %s %s - \$%.2f [Y/N]: ", $payment->@[0..4];
+
+    chomp( my $key = <STDIN> );
+    if ($key =~ /y/i) {
+        $validate->execute($payment->[-1]);
+    }
+
+    if ($key =~ /q/i) {
+        last;
+    }
+}
