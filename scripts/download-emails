@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+use feature 'say';
+
+use warnings;
+use strict;
+
+use lib qw/lib/;
+
+use MOME;
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet(
+    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
+);
+
+my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
+
+my @rows = $worksheet->rows;
+
+# Get my rownames and then ditch the row they are in
+my %f = reverse %{$rows[0]->content};
+pop @rows;
+
+my @fixed_fields = qw/ email /;
+
+my @out = ();
+foreach my $row (@rows) {
+    if ($row->content->{$f{testing}}) {
+        next;
+    }
+
+    my %row = %{$row->content};
+    foreach my $pn (1..4) {
+        my @fields = map { 'p' . $pn . $_ } @fixed_fields;
+
+        if (grep { /\w/ } @row{ @f{@fields} }) {
+            push @out, [ @row{ @f{@fields} } ];
+        } else {
+            next;
+        }
+    }
+}
+
+my %seen;
+print map { $_->[0], ",\n" } grep { !$seen{$_->[0]}++ } @out;
