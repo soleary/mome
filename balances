@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+
+my $where = '';
+
+for ($ARGV[0] or '') {
+    if ($_ eq '-n') { $where = 'where balance < 0'; last; }
+    if ($_ eq '-p') { $where = 'where balance > 0'; last; }
+    if ($_ eq '-z') { $where = 'where balance = 0'; last; }
+}
+
+my $DBFILE="sjsmusic.db";
+
+print qx/ sqlite3 $DBFILE << EOS
+.mode column
+.headers on
+select * from balance $where order by name;
+.print ''
+select count(*) as families, sum(balance) as total from balance $where;
+EOS
+/;
