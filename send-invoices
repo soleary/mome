@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+DBFILE='sjsmusic.db'
+
+echo 'This will mark all unsent invoices as sent.'
+echo 'Are you sure?'
+echo 'Enter to continue, ctrl+c to quit.'
+
+read
+
+sqlite3 $DBFILE < "update invoice set sentdate = date('now', 'localtime') where sentdate is null;"
