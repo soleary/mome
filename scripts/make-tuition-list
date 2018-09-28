@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+use feature 'say';
+
+use warnings;
+use strict;
+
+use lib qw/lib/;
+
+use MOME;
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet(
+    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
+);
+
+my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
+
+my @rows = $worksheet->rows;
+
+# Get my rownames and then ditch the row they are in
+my %f = reverse %{$rows[0]->content};
+pop @rows;
+
+my @parent_fields = qw/ first last /;
+my @fixed_fields = qw/ first last /;
+my @ins_fields = qw/ ins /;
+
+my @out = ();
+foreach my $row (@rows) {
+    if ($row->content->{$f{testing}}) {
+        next;
+    }
+
+    my %row = %{$row->content};
+    foreach my $sn (1..3) {
+        foreach my $in (1..3) {
+            my @pfields = map { 'p1' . $_ } @parent_fields;
+            my @sfields = map { 's' . $sn . $_ } @fixed_fields;
+            my @infields = map { 's' . $sn . $_ . $in } @ins_fields;
+            my @fields = ('momefid', @pfields, @sfields, @infields);
+
+            #print Dumper \@fields;
+            print $row{ $f{momefid} }, "\n";
+
+            if (grep { /\w/ } @row{ @f{@infields} }) {
+                push @out, [ @row{ @f{@fields} } ];
+                #print Dumper \@row{ @f{@fields} };
+            } else {
+                next;
+            }
+        }
+    }
+}
+
+my @out_fields = qw/ momefid first last first last instrument tuition /;
+
+my $out_sheet = $service->spreadsheet({title => 'Tuition List'});
+my $o = $out_sheet->worksheet({title => 'Sheet1'});
+
+my $x = 1;
+my @title_row = map { { row => 1, col => $x++, input_value => ucfirst($_) } } @out_fields;
+
+$o->batchupdate_cell( @title_row );
+
+my $y = 2;
+foreach my $row (@out) {
+
+    my $x = 1;
+    my @row = map { { row => $y, col => $x++, input_value => $_ } } $row->@*;
+    $o->batchupdate_cell( @row );
+    $y++;
+    #my %r = ();
+    #@r{@out_fields} = $row->@*;
+
+    #$o->add_row( { %r } );
+}
