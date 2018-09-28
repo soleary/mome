@@ -1,0 +1,10 @@
+Tool to upload student roster
+Tool to upload parent list
+Email addresses and links for Beth
+
+---
+
+In order to delete, get active session, then a list of MOMEFIDs.
+On insert, skip if duplicate MOMEFID.
+Prompt for deletion?
+To reload, just delete MOMEFID.
