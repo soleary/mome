@@ -1,0 +1,193 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use autodie;
+
+use DBI;
+use Term::ReadKey;
+use DateTime;
+use Data::Dumper;
+
+$|++;
+
+my $TESTING = undef;
+
+my $DBFILE = 'sjsmusic.db';
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $search_sth = $dbh->prepare(
+    qq{ select email, firstname, lastname, id from person where
+            (firstname like ? or lastname like ? or email like ?) and type != 'student'; }
+);
+my $payment_sth = $dbh->prepare(
+    qq{ insert into ledger (momefid, amount, type, date, testing)
+            values (?,?,?,date('now', 'localtime'),?); }
+);
+my $checknum_sth = $dbh->prepare(qq{ update ledger set checknum = ? where id = ?; });
+
+my $note_sth = $dbh->prepare(qq{ update ledger set notes = ? where id = ?; });
+
+while (1) {
+    print "Search term: ";
+
+    my $term = <STDIN>;
+    chomp $term;
+
+    last if $term =~ /^q$/i;
+    next if $term eq '';
+
+    my @terms = ("%$term%") x 3;
+
+    $search_sth->execute(@terms);
+
+    my @search = $search_sth->fetchall_arrayref()->@*;
+
+    if (@search == 0) {
+        print "No results returned.\n";
+        next;
+    }
+
+    my $parent = prompt('Select parent for payment:', build_parent_hash(@search));
+
+    next unless $parent;
+
+    my %payment_types = (
+        a => { d => 'Adjustment' },
+        d => { d => 'Debit' },
+        p => { d => 'PayPal' },
+        c => { d => 'Cash' },
+        k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $n = <STDIN>); return ['check', $n];} },
+    );
+
+    my $type = prompt('Payment type:', %payment_types);
+
+    print "Amount: ";
+    chomp(my $amount = <STDIN>);
+
+    if ($type->[0] eq 'debit' and $amount > 0) {
+        $amount = '-' . $amount;
+    }
+
+    say "Payment OK?";
+    printf "%s %s %s : %s \$%.2f\n", $parent->@[0,1,2], join(' ', $type->@*), $amount;
+    print "[Y/N]: ";
+    chomp( my $resp = <STDIN> );
+
+    next unless $resp =~ /y/i;
+
+    payment_to_ledger($amount, $parent->@*, $type->@*);
+}
+
+sub get_momefid {
+    my $mfid_sth = $dbh->prepare_cached(qq{ select momefid from family_member where personid = ? });
+
+    $mfid_sth->execute($_[0]);
+    my @momefid = $mfid_sth->fetchrow_array();
+    $mfid_sth->finish();
+
+    return $momefid[0];
+}
+
+sub payment_to_ledger {
+    my %pmt = ();
+    my $x = 0;
+    foreach my $f (qw/amount email first last id type checknum/) {
+        $pmt{$f} = $_[$x];
+        $x++;
+    }
+
+    my $momefid = get_momefid($pmt{id});
+
+    $payment_sth->execute($momefid, $pmt{amount}, $pmt{type}, $TESTING);
+
+    if ($pmt{checknum}) {
+        $checknum_sth->execute($pmt{checknum},
+            $dbh->last_insert_id('','', 'ledger', 'id'));
+    }
+
+    if ($pmt{type} eq 'debit') {
+        my $note = simple_prompt('Note: ');
+        $note_sth->execute($note,
+            $dbh->last_insert_id('', '', 'ledger', 'id'));
+    }
+}
+
+sub simple_prompt {
+    my $string = shift;
+
+    print "$string";
+    chomp( my $resp = <STDIN> );
+
+    return $resp ? $resp : undef;
+}
+
+sub prompt {
+    my $prompt = shift;
+
+    # Takes a hash of things to pick from.
+    # Each entry in the hash must have a value for {d}.
+    # You have the right to a {v}.  If you cannot afford one,
+    # one will be appointed to you by the court.
+    #
+    # $hash{$key}{d} = The string to display in the prompt
+    # $hash{$key}{v} = The value to be returned by this sub if this item is selected
+    # $hash{$key}{c} = Optional code reference to be run if this item is selected
+    #                  The data in {v} will be passed into this coderef and it's
+    #                  result returned by this sub
+    #
+
+    # Don't actually prompt if there's only one value
+    if (@_ == 2) {
+        return $_[1]->{v};
+    }
+
+    my %items = @_;
+
+    # Make up a {v} value if one isn't supplied
+    foreach my $k (keys %items) {
+        next if $items{$k}{v};
+        $items{$k}{v} = [ lc $items{$k}{d} ];
+    }
+
+    ReadMode 4;
+
+    my $key;
+    do {
+        say $prompt;
+        foreach my $k (sort keys %items) {
+            printf "%2s. %s\n", $k, $items{$k}{d};
+        }
+        print "? ";
+        while (not defined ($key = ReadKey(-1))) {}
+    } until
+        ($items{$key}{v} or $key eq 'q');
+
+    print "\n";
+
+    ReadMode 0;
+
+    if ($items{$key}{c}) {
+        return $items{$key}{c}->($items{$key}{v});
+    }
+
+    return $items{$key}{v};
+}
+
+sub build_parent_hash {
+    my @rents = @_;
+
+    my %values = ();
+
+    my $i;
+    foreach my $rent (@rents) {
+        $i++;
+        $values{$i}{d} = sprintf '%-28s %s %s', map { defined ? $_ : '' } $rent->@[0,1,2];
+        $values{$i}{v} = [ $rent->@* ];
+    }
+
+    return %values;
+}
