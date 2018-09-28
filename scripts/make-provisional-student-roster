@@ -10,15 +10,10 @@ use lib qw/lib/;
 use MOME;
 use Data::Dumper;
 
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
 my $service = MOME::google_sheets();
-
-my $spreadsheet = $service->spreadsheet(
-    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
-);
-
-my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
-
-my @rows = $worksheet->rows;
 
 # Get my rownames and then ditch the row they are in
 my %f = reverse %{$rows[0]->content};
@@ -49,7 +44,11 @@ foreach my $row (@rows) {
     }
 }
 
-my @out_fields = qw/ first last grade band instrument years /;
+my $dbh->prepare(qq{ select firstname, lastname, grade, id, class, instrument, experience from student_roster; });
+
+while (
+
+my @out_fields = qw/ first last grade group instrument years /;
 
 my $out_sheet = $service->spreadsheet({title => 'Provisional Student Roster'});
 my $o = $out_sheet->worksheet({title => 'Sheet1'});
