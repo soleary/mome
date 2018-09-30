@@ -8,4 +8,4 @@ echo 'Enter to continue, ctrl+c to quit.'
 
 read
 
-sqlite3 $DBFILE < "update invoice set sentdate = date('now', 'localtime') where sentdate is null;"
+sqlite3 $DBFILE "update invoice set sentdate = date('now', 'localtime') where sentdate is null;"
