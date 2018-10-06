@@ -1636,6 +1636,16 @@ DISTRIBUTIONS
       strict 0
       utf8 0
       warnings 0
+  URI-Encode-v1.1.1
+    pathname: M/MI/MITHUN/URI-Encode-v1.1.1.tar.gz
+    provides:
+      URI::Encode v1.1.1
+    requirements:
+      Encode 2.12
+      Module::Build 0.38
+      Test::More 0
+      perl v5.8.1
+      version 0
   Variable-Magic-0.62
     pathname: V/VP/VPIT/Variable-Magic-0.62.tar.gz
     provides:
