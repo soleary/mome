@@ -1,6 +1,5 @@
 Tool to upload student roster
 Tool to upload parent list
-Email addresses and links for Beth
 
 ---
 
@@ -8,3 +7,42 @@ In order to delete, get active session, then a list of MOMEFIDs.
 On insert, skip if duplicate MOMEFID.
 Prompt for deletion?
 To reload, just delete MOMEFID.
+
+--
+
+When entering payments, do a secondary search if there no results.
+Check for students with the search terms and return them.
+
+--
+
+Payment notifications
+
+Table with momefid and notification type (payment, paid_up)
+Date and sentdate
+Upload to sheets
+
+When payment validated
+    check to see if paid up
+    check if momefid and no sentdate in notifications
+    if no sentdate and not paid up -> paymet notification
+    if no sentdate and paid up -> Thanks for being done
+
+--
+
+Next year, when parsing, add a class for Advanced Band to avoid
+having to put an in clause for the grades.  This will confine all
+the logic for what constitutes an Advanced Band to the parse-signups
+script.  As it stands, they are all just Band and then you have to walk
+back to person from class_member to get grade, then constrain grades just
+for Advanced Band.  I guess classes could have a grade, but that's either
+denormalizing or not really a property for an individual class.
+
+--
+
+When a family's tuition changes, a debit must be added to make
+their previous debits equal to one of their future ones.  This could
+be automated.
+1. Calculate new payment series
+2. Compare existing payments to new payment series pairwise
+3. Total up differences
+4. Add debit equal to total of all differences
