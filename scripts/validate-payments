@@ -5,7 +5,7 @@ use autodie;
 
 use DBI;
 
-# Set to either unfef or truthy as to not pollute db with ''s
+# Set to either undef or truthy as to not pollute db with ''s
 my $TESTING;
 my $DBFILE = 'sjsmusic.db';
 
@@ -31,7 +31,7 @@ my $validate = $dbh->prepare('update ledger set validated = 1 where id = ?');
 my $ex_validate = $dbh->prepare('update additional_deposits set validated = 1 where id = ?');
 
 my $add_notification = $dbh->prepare(q{insert into notification (momefid, type, date, testing) values (?,?,date('now', 'localtime'),?); });
-my $void_notification = $dbh->prepare(q{update notification set superseded = 1 where momefid = ?;});
+my $void_notification = $dbh->prepare(q{update notification set superseded = 1 where momefid = ? and sentdate is null;});
 my $paid_up = $dbh->prepare(q{select momefid from paid_up where momefid = ?});
 
 foreach my $sth ($payments, $extra) {
