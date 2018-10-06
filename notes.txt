@@ -15,20 +15,6 @@ Check for students with the search terms and return them.
 
 --
 
-Payment notifications
-
-Table with momefid and notification type (payment, paid_up)
-Date and sentdate
-Upload to sheets
-
-When payment validated
-    check to see if paid up
-    check if momefid and no sentdate in notifications
-    if no sentdate and not paid up -> paymet notification
-    if no sentdate and paid up -> Thanks for being done
-
---
-
 Next year, when parsing, add a class for Advanced Band to avoid
 having to put an in clause for the grades.  This will confine all
 the logic for what constitutes an Advanced Band to the parse-signups
