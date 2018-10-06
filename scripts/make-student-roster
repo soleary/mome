@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use DBI;
+
+use lib 'lib';
+
+use MOME;
+
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet({title => 'roster'});
+my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
+
+my @out_fields = ('Last Name', 'First Name', 'Grade', 'Contact');
+
+my $x = 1;
+my $y = 1;
+my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
+$out_sheet->batchupdate_cell( @title_row );
+$y++;
+
+my $email_sth = $dbh->prepare_cached(
+    qq{select p.firstname, p.lastname, p.email
+        from person as p, family_member as fm
+        where
+            p.email is not null
+        and p.type = 'parent'
+        and fm.personid = p.id
+        and fm.momefid = ?;}
+);
+
+my $student_sth = $dbh->prepare(qq{select distinct(momefid), lastname, firstname, grade from student_roster order by lastname, firstname;});
+$student_sth->execute();
+
+while (my $student = $student_sth->fetch()) {
+    my $x = 1;
+    my @student = $student->@*;
+    my $momefid = shift @student;
+
+    $student[@student] = parent_email_link($momefid);
+
+    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } @student;
+    $out_sheet->batchupdate_cell( @row );
+
+    say $y;
+    $y++;
+}
+
+sub ce {
+    return '' unless defined $_[0];
+    return $_[0];
+}
+
+sub parent_email_link {
+    my $momefid = $_[0];
+
+    $email_sth->execute($momefid);
+
+    my %seen = ();
+    my @emails = ();
+
+    while (my $rec = $email_sth->fetch()) {
+        if ($seen{$rec->[2]}++) {
+            next;
+        }
+
+        push @emails, $rec->[0] . ' ' . $rec->[1] . ' <' . $rec->[2] . '>';
+    }
+    $email_sth->finish();
+
+    my $link = '=HYPERLINK("mailto:' . join ',', @emails;
+    return $link . '", "Email Parents")';
+}
