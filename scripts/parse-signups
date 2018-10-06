@@ -146,10 +146,13 @@ sub write_instrument {
         $class = 'Ukulele Ministry';
     }
 
+    # XXX: Fixme - this totally didn't work
     if ($class eq 'Band' and $grade > 5) {
         $class = 'Advanced Band';
     }
 
+    # XXX: Fixme - this needs to be numbers 0 = Sunday, 1 = Monday, ect... for
+    # the sort order coming out of the DB to work
     if ($class eq 'Orchestra' or $instrument eq 'Ukulele') {
         $rec{day} = 'Monday';
     } elsif ($class eq 'Advanced Band') {
