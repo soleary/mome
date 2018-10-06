@@ -18,22 +18,42 @@ my $payments = $dbh->prepare(q{
             order by l.id;
 });
 
-$payments->execute();
+my $extra = $dbh->prepare(q{
+    select 0 as momefid, ad.notes, ad.type, ad.checknum, ad.amount, ad.id
+        from additional_deposits as ad
+        where validated is null
+        order by ad.id;
+});
 
 my $validate = $dbh->prepare('update ledger set validated = 1 where id = ?');
+my $ex_validate = $dbh->prepare('update additional_deposits set validated = 1 where id = ?');
 
 while ( my $payment = $payments->fetch() ) {
 
-    foreach my $e ($payment->@*) {
-        $e = '' unless defined $e;
-    }
+foreach my $sth ($payments, $extra) {
+    $sth->execute();
+    while ( my $payment = $sth->fetch() ) {
 
-    printf "%3d %15s %s %s - \$%.2f [Y/N]: ", $payment->@[0..4];
+        foreach my $e ($payment->@*) {
+            $e = '' unless defined $e;
+        }
+
+        printf "%3d %15s %s %s - \$%.2f [Y/N]: ", $payment->@[0..4];
+
+        chomp( my $key = <STDIN> );
+        if ($key =~ /y/i) {
+        }
+
+        if ($key =~ /q/i) {
+            last;
+        }
 
     chomp( my $key = <STDIN> );
     if ($key =~ /y/i) {
         $validate->execute($payment->[-1]);
     }
+    $sth->finish();
+}
 
     if ($key =~ /q/i) {
         last;
