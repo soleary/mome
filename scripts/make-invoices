@@ -176,7 +176,7 @@ sub invoice_to_google {
 }
 
 sub ce {
-    return '' unless $_[0];
+    return '' unless defined $_[0];
     return $_[0];
 }
 
