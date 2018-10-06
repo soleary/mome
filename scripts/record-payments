@@ -13,7 +13,9 @@ use Data::Dumper;
 
 $|++;
 
-my $TESTING = undef;
+# Should be a truthy value or undef.  Not '', or you'll end up
+# with empty strings in db rather than nulls.
+my $TESTING;
 
 my $DBFILE = 'sjsmusic.db';
 
@@ -27,9 +29,17 @@ my $payment_sth = $dbh->prepare(
     qq{ insert into ledger (momefid, amount, type, date, testing)
             values (?,?,?,date('now', 'localtime'),?); }
 );
-my $checknum_sth = $dbh->prepare(qq{ update ledger set checknum = ? where id = ?; });
 
-my $note_sth = $dbh->prepare(qq{ update ledger set notes = ? where id = ?; });
+my $ad_sth = $dbh->prepare(
+    qq{ insert into additional_deposits (amount, type, date, testing)
+            values (?,?,date('now', 'localtime'),?); }
+);
+
+my $ledger_check_sth = $dbh->prepare(qq{ update ledger set checknum = ? where id = ?; });
+my $ledger_note_sth  = $dbh->prepare(qq{ update ledger set notes = ? where id = ?; });
+
+my $ad_check_sth = $dbh->prepare(qq{ update additional_deposits set checknum = ? where id = ?; });
+my $ad_note_sth  = $dbh->prepare(qq{ update additional_deposits set notes = ? where id = ?; });
 
 while (1) {
     print "Search term: ";
@@ -38,6 +48,7 @@ while (1) {
     chomp $term;
 
     last if $term =~ /^q$/i;
+    goto ADDITIONAL if $term =~ /^a$/i;
     next if $term eq '';
 
     my @terms = ("%$term%") x 3;
@@ -55,6 +66,7 @@ while (1) {
 
     next unless $parent;
 
+    ADDITIONAL:
     my %payment_types = (
         a => { d => 'Adjustment' },
         d => { d => 'Debit' },
@@ -73,13 +85,44 @@ while (1) {
     }
 
     say "Payment OK?";
-    printf "%s %s %s : %s \$%.2f\n", $parent->@[0,1,2], join(' ', $type->@*), $amount;
+
+    if ($term eq 'a') {
+        printf "%s \$%.2f", join(' ', $type->@*), $amount;
+    } else {
+        printf "%s %s %s : %s \$%.2f\n", $parent->@[0,1,2], join(' ', $type->@*), $amount;
+    }
+
     print "[Y/N]: ";
     chomp( my $resp = <STDIN> );
 
     next unless $resp =~ /y/i;
 
-    payment_to_ledger($amount, $parent->@*, $type->@*);
+    if ($term eq 'a') {
+        payment_to_additional($amount, $type->@*);
+    } else {
+        payment_to_ledger($amount, $parent->@*, $type->@*);
+    }
+}
+
+sub payment_to_additional {
+    my %pmt = ();
+    my $x = 0;
+    foreach my $f (qw/amount type checknum/) {
+        $pmt{$f} = $_[$x];
+        $x++;
+    }
+
+    $ad_sth->execute($pmt{amount}, $pmt{type}, $TESTING);
+
+    if ($pmt{checknum}) {
+        $ad_check_sth->execute($pmt{checknum},
+            $dbh->last_insert_id('','', 'additional_deposits', 'id'));
+    }
+
+    my $note = simple_prompt('Note: ');
+    $ad_note_sth->execute($note,
+        $dbh->last_insert_id('', '', 'additional_deposits', 'id'));
+
 }
 
 sub get_momefid {
@@ -105,13 +148,13 @@ sub payment_to_ledger {
     $payment_sth->execute($momefid, $pmt{amount}, $pmt{type}, $TESTING);
 
     if ($pmt{checknum}) {
-        $checknum_sth->execute($pmt{checknum},
+        $ledger_check_sth->execute($pmt{checknum},
             $dbh->last_insert_id('','', 'ledger', 'id'));
     }
 
     if ($pmt{type} eq 'debit') {
         my $note = simple_prompt('Note: ');
-        $note_sth->execute($note,
+        $ledger_note_sth->execute($note,
             $dbh->last_insert_id('', '', 'ledger', 'id'));
     }
 }
