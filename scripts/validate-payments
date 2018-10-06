@@ -5,6 +5,8 @@ use autodie;
 
 use DBI;
 
+# Set to either unfef or truthy as to not pollute db with ''s
+my $TESTING;
 my $DBFILE = 'sjsmusic.db';
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
@@ -28,7 +30,9 @@ my $extra = $dbh->prepare(q{
 my $validate = $dbh->prepare('update ledger set validated = 1 where id = ?');
 my $ex_validate = $dbh->prepare('update additional_deposits set validated = 1 where id = ?');
 
-while ( my $payment = $payments->fetch() ) {
+my $add_notification = $dbh->prepare(q{insert into notification (momefid, type, date, testing) values (?,?,date('now', 'localtime'),?); });
+my $void_notification = $dbh->prepare(q{update notification set superseded = 1 where momefid = ?;});
+my $paid_up = $dbh->prepare(q{select momefid from paid_up where momefid = ?});
 
 foreach my $sth ($payments, $extra) {
     $sth->execute();
@@ -42,20 +46,39 @@ foreach my $sth ($payments, $extra) {
 
         chomp( my $key = <STDIN> );
         if ($key =~ /y/i) {
+            if ($payment->[0] == 0) {
+                $ex_validate->execute($payment->[-1]);
+            } else {
+                $validate->execute($payment->[-1]);
+            }
         }
 
         if ($key =~ /q/i) {
             last;
         }
 
-    chomp( my $key = <STDIN> );
-    if ($key =~ /y/i) {
-        $validate->execute($payment->[-1]);
+        if ($payment->[0] == 0) {
+            next;
+        } else {
+            make_notification($payment);
+        }
     }
     $sth->finish();
 }
 
-    if ($key =~ /q/i) {
-        last;
+sub make_notification {
+    my $momefid = $_[0]->[0];
+
+    $void_notification->execute($momefid);
+
+    $paid_up->execute($momefid);
+
+    my $type;
+    if ($paid_up->fetch()) {
+        $type = 'paid-up';
+    } else {
+        $type = 'payment';
     }
+
+    $add_notification->execute($momefid, $type, $TESTING);
 }
