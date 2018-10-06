@@ -28,5 +28,7 @@ create table additional_deposits(
     ,date text not null
     ,depositdate text
     ,validated text
+    ,notes text
+    ,testing text
 );
 
