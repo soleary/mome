@@ -1,0 +1,123 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use DBI;
+
+use lib 'lib';
+
+use MOME;
+
+my @DOW = qw/ Sunday Monday Tuesday Wednesday Thursday Friday Saturday /;
+
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet({title => 'roster'});
+my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
+
+# enum       => query necessary to get a list of items to put in for placeholder in result statement
+# enaum_type => If 'dow' then day of week numbers will be translated to day names.  Anything else is ignored.
+# result     => query to be executed with each row from enum statement, to produce the deisred groupings
+my %sths = (
+    day           => {
+        enum      => qq{ select distinct(day) from class_member order by day; },
+        enum_type => 'dow',
+        result    => qq{
+            select firstname, lastname, email
+                from person as p, family_member as fm
+                where
+                    p.type = 'parent'
+                and p.email is not null
+                and p.id = fm.personid
+                and fm.momefid in
+                    (select momefid from family_member where personid in
+                        (select personid from class_member where day = ?))
+                order by lastname;},
+    },
+    class         => {
+        enum      => qq{ select distinct(class) from class_member order by class; },
+        enum_type => '',
+        result    => qq{
+        select firstname, lastname, email
+            from person as p, family_member as fm
+            where
+                p.type = 'parent'
+            and p.email is not null
+            and p.id = fm.personid
+            and fm.momefid in
+                (select momefid from family_member where personid in
+                (select personid from class_member where class = ?))
+            order by lastname;},
+    },
+);
+
+my @rows = ();
+
+push @rows, [ 'Parent Email Groups' ];
+push @rows, [ ];
+
+foreach my $type (sort keys %sths) {
+    my $enum_sth = $dbh->prepare($sths{$type}{enum});
+    $enum_sth->execute();
+
+    my @labels = ( 'By ' . ucfirst $type, 'To', 'Cc', 'Bcc' );
+
+    my $result_sth = $dbh->prepare_cached($sths{$type}{result});
+
+    push @rows, [ $labels[0] ];
+
+    while (my $item = $enum_sth->fetch()) {
+        $result_sth->execute($item->[0]);
+
+        my @emails = ();
+        while (my $row = $result_sth->fetch()) {
+            push @emails, $row->[0] . ' ' . $row->[1] . ' <' . $row->[2] . '>';
+        }
+
+        my @row = ();
+
+        foreach my $f (@labels) {
+            if ($f =~ /^By/) {
+                if ($sths{$type}{enum_type} eq 'dow') {
+                    push @row, $DOW[$item->[0]];
+                } else {
+                    push @row, $item->[0];
+                }
+            } else {
+                push @row, hyperlink_emails($f, @emails);
+            }
+        }
+        push @rows, [ @row ];
+    }
+    push @rows, [ ];
+}
+
+
+my $y = 1;
+foreach my $row (@rows) {
+    my $x = 1;
+
+    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $row->@*;
+    $out_sheet->batchupdate_cell( @row );
+
+    say $y;
+    $y++;
+}
+
+sub ce {
+    return '' unless defined $_[0];
+    return $_[0];
+}
+
+sub hyperlink_emails {
+    my $type = shift;
+    my @emails = @_;
+
+    my $link = qq{=HYPERLINK("mailto:?$type=} . join ',', @emails;
+    return $link . qq{", "Email as } . ucfirst $type . qq{")};
+}
