@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use DBI;
+use URI::Encode 'uri_encode';
+
+use lib 'lib';
+
+use MOME;
+
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $service = MOME::google_sheets();
+
+my $spreadsheet = $service->spreadsheet({title => 'roster'});
+my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
+
+my @out_fields = ('Last Name', 'First Name', 'Phone', 'Email' );
+
+my $x = 1;
+my $y = 1;
+my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
+$out_sheet->batchupdate_cell( @title_row );
+$y++;
+
+my %emails_seen = ();
+
+my $parent_sth = $dbh->prepare(qq{select lastname, firstname, phone, email from parent_roster order by lastname, id;});
+$parent_sth->execute();
+
+while (my $parent = $parent_sth->fetch()) {
+    my $x = 1;
+
+    $parent->[3] = ce($parent->[3]);
+
+    if ($emails_seen{$parent->[3]}++) {
+        $parent->[3] = '';
+    }
+
+    $parent->[2] = make_phone_link($parent);
+    $parent->[3] = make_mailto($parent);
+
+    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $parent->@*;
+    $out_sheet->batchupdate_cell( @row );
+
+    say $y;
+    $y++;
+}
+
+sub ce {
+    return '' unless defined $_[0];
+    return $_[0];
+}
+
+sub make_mailto {
+    my $p = $_[0];
+
+    return '' unless $p->[3];
+    return '=HYPERLINK("mailto:'
+    . $p->[1] . ' ' . $p->[0] . ' ' . '<' . $p->[3] . '>'
+    . '", "' . $p->[3] . '")';
+}
+
+sub make_phone_link {
+    my $p = $_[0];
+    return $p->[2];
+
+    return '' unless $p->[2];
+    return '="+'. $p->[2] . '"';
+}
