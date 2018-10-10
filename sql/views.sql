@@ -41,45 +41,64 @@ create view deposits as
 drop view if exists deposit_slip;
 create view deposit_slip as
         select type, count(type) as count, sum(amount) as amount
-            from deposits
-            group by type
+        from deposits
+        group by type
     union
-        select 'Total', count(*), sum(amount) from deposits where type != 'paypal'
+        select 'Total', count(*), sum(amount)
+        from deposits
+        where type != 'paypal'
     union
-        select 'Grand Total', count(*), sum(amount) from deposits
-    order by type desc;
+        select 'Grand Total', count(*), sum(amount)
+        from deposits
+        order by type desc;
 
 drop view if exists student_roster;
 create view student_roster as
-    select p.firstname, p.lastname, p.grade, p.id, c.class, c.instrument, c.experience
-    from person as p, class_member as c
-    where p.id = c.personid
+    select f.momefid, cm.id as classid, p.id, p.firstname, p.lastname, p.grade, cm.class, cm.instrument, cm.experience
+    from person as p, class_member as cm, family as f, family_member as fm
+    where p.id = cm.personid
+        and f.momefid = fm.momefid
+        and fm.personid = p.id
     order by p.lastname, p.firstname;
+
+drop view if exists parent_roster;
+create view parent_roster as
+    select f.momefid, p.id, p.firstname, p.lastname, p.phone, p.email
+    from person as p, family as f, family_member as fm
+    where p.id = fm.personid
+        and fm.momefid = f.momefid
+        and p.type = 'parent'
+        and (p.email is not null or p.phone is not null)
+    order by p.lastname, p.id;
 
 drop view if exists paid_vs_tuition;
 create view paid_vs_tuition as
     select f.momefid, f.name, sum(a.amount) as paid, f.tuition
-        from family as f, adjusted_payment as a 
-        where f.momefid = a.momefid group by a.momefid;
+    from family as f, adjusted_payment as a
+    where f.momefid = a.momefid group by a.momefid;
 
-drop view if exists tuition_left;
-create view tuition_left as
+drop view if exists tuition_remaining;
+create view tuition_remaining as
     select *, paid - tuition as owed from paid_vs_tuition;
 
 drop view if exists paid_up;
 create view paid_up as
-    select * from tuition_left
-        where owed = 0;
+    select * from tuition_remaining
+    where owed = 0
+    order by name;
 
 drop view if exists total;
 create view total as
-      select '01' as Num, 'Paid' as Item, sum(amount) as 'Total' from payment
-union select '02', 'Billed', sum(amount) from debit
-union select '03', 'Balance', sum(amount) from clean_ledger
-union select '04', 'High', max(balance) from balance
-union select '05', 'Low', min(balance) from balance
-union select '06', 'Paid Up', count(*) from paid_up
-union select '07', 'Zero Balance', count(*) from balance where balance = 0
-union select '08', 'Negative Balance', count(*) from balance where balance < 0
-union select '09', 'Positive Balance', count(*) from balance where balance > 0
-union select '10', 'Invoices', count(id) from invoice order by Num;
+      select '01' as Num, 'Tuition' as Item, sum(tuition) as 'Total' from family
+union select '02', 'Paid', sum(amount) as 'Total' from payment
+union select '03', 'Billed', substr(sum(amount), 2) from debit
+union select '04', 'Balance', sum(amount) from clean_ledger
+union select '05', 'Owed', sum(owed) from tuition_remaining
+union select '06', 'High', max(balance) from balance
+union select '07', 'Low', min(balance) from balance
+union select '08', 'Families', count(id) from family where session = (select id from session where active is not null)
+union select '09', 'Paid Up', count(*) from paid_up
+union select '10', 'Zero Balance', count(*) from balance where balance = 0
+union select '11', 'Negative Balance', count(*) from balance where balance < 0
+union select '12', 'Positive Balance', count(*) from balance where balance > 0
+union select '13', 'Invoices', count(id) from invoice order by Num;
