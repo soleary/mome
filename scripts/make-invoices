@@ -15,6 +15,7 @@ use MOME;
 my $TESTING;
 # Number of days one has to make a payment
 my $PAYMENT_INTERVAL = 5;
+my $INV_THRESHOLD = 5;     # Balance amount under wich we don't send an invoice - they are still recorded in DB
 my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
@@ -160,7 +161,11 @@ sub invoice_to_google {
             next;
         }
 
-        #record_to_db(%{$a}, %{$parent});
+        my $invid = record_to_db(%{$a}, %{$parent});
+
+        if ($a->{donotsend} or $a->{balance} < $INV_THRESHOLD) {
+            next;
+        }
 
         my $x = 1;
         my @row = ();
