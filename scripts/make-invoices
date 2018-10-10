@@ -5,6 +5,7 @@ use strict;
 
 use Modern::Perl '2018';
 use DBI;
+use Getopt::Long;
 use DateTime;
 
 use lib 'lib';
@@ -21,6 +22,17 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 my $dt = DateTime->now();
 
 my $service = MOME::google_sheets();
+
+my $F;
+GetOptions(
+    'force|followup' => \$F,
+);
+
+my $date = today();
+
+unless (today_is_payment_date() or $F) {
+    die "Today isn't a payment date and --force or --followup not specified.\n";
+}
 
 my $spreadsheet = $service->spreadsheet({title => 'Invoices'});
 my $invoice_sheet = $spreadsheet->worksheet({title => 'Mail Merge'});
@@ -74,6 +86,10 @@ sub payment_date {
     $dt->add(days       => $PAYMENT_INTERVAL);
     return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
     #return @{$dbh->selectrow_arrayref(qq{ select date('now', '+5 days', 'localtime'); })}[0];
+}
+
+sub today_is_payment_date {
+    return @{$dbh->selectrow_arrayref(qq{ select count(*) from payment_schedule where date = date('now', 'localtime'); })}[0];
 }
 
 sub format_day {
