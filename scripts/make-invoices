@@ -20,7 +20,7 @@ my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-my $dt = DateTime->now();
+my $tz = DateTime::TimeZone->new( name => 'local' );
 
 my $service = MOME::google_sheets();
 
@@ -76,17 +76,20 @@ sub get_parents {
 
 sub today {
     my $dt = DateTime->now();
-    $dt->subtract( days => 1); #XXX: HACK!
+    $dt->set_time_zone($tz);
     return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
-    #return @{$dbh->selectrow_arrayref(qq{ select date('now','localtime'); })}[0];
 }
 
 sub payment_date {
     my $dt = DateTime->now();
-    $dt->subtract( days => 1 );  #XXX: HACK!
-    $dt->add(days       => $PAYMENT_INTERVAL);
+
+    $dt->set_time_zone($tz);
+
+    if (today_is_payment_date()) {
+        $dt->add(days => $PAYMENT_INTERVAL);
+    }
+
     return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
-    #return @{$dbh->selectrow_arrayref(qq{ select date('now', '+5 days', 'localtime'); })}[0];
 }
 
 sub today_is_payment_date {
