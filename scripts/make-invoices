@@ -124,18 +124,22 @@ sub record_to_db {
 
     my $inv_sth = $dbh->prepare_cached(qq{
         insert into invoice
-            (personid, amount, paypal, date, duedate, testing, session)
-            values (?,?,?,?,?,?,(select id from session where active is not null));
+            (personid, amount, paypal, date, duedate, donotsend, testing, session)
+            values (?,?,?,?,?,?,?,(select id from session where active is not null));
     });
 
-    $inv_sth->execute($i{personid}, $i{balance}, $i{paypal}, $i{invoice_dt}->ymd(), $i{payment_dt}->ymd(), $TESTING);
+    $inv_sth->execute($i{personid}, $i{balance}, $i{paypal}, $i{invoice_dt}->ymd(), $i{payment_dt}->ymd(), $i{donotsend}, $TESTING);
+
+    return $dbh->last_insert_id('','', 'invoice', 'id');
 }
 
 my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachments', 'Scheduled Date', 'Mail Merge Status');
-my @out_fields = (@email_fields, qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /);
+my @inv_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
+my @out_fields = (@email_fields, 'invid',  @inv_fields);
 
 my $x = 1;
-my @title_row = map { { row => 1, col => $x++, input_value => $_ } } @out_fields;
+my $y = 1;
+my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
 $invoice_sheet->batchupdate_cell( @title_row );
 my $y = 2;
 
@@ -154,8 +158,14 @@ sub invoice_to_google {
     ($a->{invoice_dt}, $a->{invoice_date}) = today();
     ($a->{payment_dt}, $a->{payment_date}) = payment_date $a->{invoice_date};
     $a->{tuition} = sprintf '%.2f', $a->{tuition};
-    my @parents = get_parents $a->{momefid};
 
+    if (defined $a->{nobill}) {
+        if ($a->{nobill} eq 'I' or $a->{nobill} eq 'B') {
+            $a->{donotsend} = 1;
+        }
+    }
+
+    my @parents = get_parents $a->{momefid};
     foreach my $parent (@parents) {
         if ($emails_seen{$parent->{email}}++) {
             next;
@@ -169,8 +179,6 @@ sub invoice_to_google {
 
         my $x = 1;
         my @row = ();
-        my @more_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
-        # $tuition, $plan, $total->as_float(), $total, $cash->as_float(), $paypal, $url, $DATE, $TESTING, $flag;
 
         # Parent info for invoice
         foreach my $f (qw/ firstname lastname email /){
@@ -182,8 +190,10 @@ sub invoice_to_google {
             push @row, undef;
         }
 
+        push @row, $invid;
+
         # Additional fields for invoice template
-        foreach my $f (@more_fields) {
+        foreach my $f (@inv_fields) {
             push @row, $a->{$f};
         }
 
