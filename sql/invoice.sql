@@ -7,6 +7,7 @@ create table invoice(
     ,date text not null
     ,duedate text not null
     ,sentdate text
+    ,donotsend text
     ,notes text
     ,testing text
 );
