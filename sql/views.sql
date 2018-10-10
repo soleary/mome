@@ -17,9 +17,9 @@ create view debit as
 
 drop view if exists clean_ledger;
 create view clean_ledger as
-    select * from adjusted_payment
+        select * from adjusted_payment
     union
-    select * from debit;
+        select * from debit;
 
 drop view if exists balance;
 create view balance as
@@ -30,7 +30,7 @@ create view balance as
 
 drop view if exists deposits;
 create view deposits as
-    select type, momefid, checknum, amount
+        select type, momefid, checknum, amount
         from clean_ledger
         where depositdate is null and type != 'debit'
     union
