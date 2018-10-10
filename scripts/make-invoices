@@ -144,7 +144,6 @@ my $x = 1;
 my $y = 1;
 my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
 $invoice_sheet->batchupdate_cell( @title_row );
-my $y = 2;
 
 my %emails_seen = ();
 
@@ -180,7 +179,6 @@ sub invoice_to_google {
             next;
         }
 
-        my $x = 1;
         my @row = ();
 
         # Parent info for invoice
@@ -200,10 +198,10 @@ sub invoice_to_google {
             push @row, $a->{$f};
         }
 
+        my $x = 1;
+        $y++;
         my @sheet_row = map { { row => $y, col => $x++, input_value => ce($_) } } @row;
         $invoice_sheet->batchupdate_cell( @sheet_row );
-
-        $y++;
     }
 }
 
