@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DBFILE='sjsmusic.db'
+
+echo 'This will mark all unsent notifications as sent.'
+echo 'Are you sure?'
+echo 'Enter to continue, ctrl+c to quit.'
+
+read
+
+sqlite3 $DBFILE "update notification set sentdate = date('now', 'localtime') where sentdate is null and superseded is null;"
