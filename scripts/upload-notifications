@@ -1,0 +1,164 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use Modern::Perl '2018';
+use DBI;
+use DateTime;
+use Memoize;
+
+use lib 'lib';
+
+use MOME;
+
+# Number of days one has to make a payment
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $service = MOME::google_sheets();
+
+memoize 'format_date';
+
+my %sheets = (
+    'paid-up' => {
+        ws => $service->spreadsheet({title => 'paid-up'}),
+    },
+    'payment' => {
+        ws => $service->spreadsheet({title => 'payments'}),
+    },
+);
+
+sub format_day {
+    my $num = shift;
+
+    my $suffix = '';
+    for ($num) {
+        if (/^11$/) { $suffix = 'th'; last; }
+        if (/^12$/) { $suffix = 'th'; last; }
+        if (/^13$/) { $suffix = 'th'; last; }
+        if (/1$/)   { $suffix = 'st'; last; }
+        if (/2$/)   { $suffix = 'nd'; last; }
+        if (/3$/)   { $suffix = 'rd'; last; }
+        default { $suffix .= 'th' }
+    }
+
+    return $num . $suffix;
+}
+
+sub ce {
+    return '' unless defined $_[0];
+    return $_[0];
+}
+
+sub get_notification {
+    my $id = $_[0];
+
+    return $dbh->selectrow_hashref(
+        qq{ select momefid, type, date from notification where id = ?; },
+        undef,
+        $id,
+    );
+}
+
+sub get_parents {
+    my $id = $_[0];
+
+    my $parent_st = qq{ select firstname, lastname, email, id as personid from person where
+                type = 'parent' and
+                email is not null and
+                id in (select personid from family_member where momefid = ?)};
+
+    my $parent_sth = $dbh->prepare_cached($parent_st);
+    $parent_sth->execute($id);
+
+    my @fields = qw/ first last email /;
+    my @parents = ();
+
+    my $row;
+    while ( $row = $parent_sth->fetchrow_hashref() ) {
+        push @parents, $row;
+    }
+    $parent_sth->finish();
+
+    return @parents;
+}
+
+sub format_date {
+    my $d = shift;
+
+    my @date_parts = split /-/, $d;
+    my @fields = qw/ year month day /;
+
+    my %date;
+    my $x;
+    foreach my $f (@fields) {
+        $date{$f} = $date_parts[$x++];
+    }
+
+    my $dt = DateTime->new( %date );
+    return sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
+}
+
+my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachments', 'Scheduled Date', 'Mail Merge Status');
+my @out_fields = (@email_fields, qw/ date /);
+
+foreach my $s (values %sheets) {
+    my $x = 1;
+    $s->{ws} = $s->{ws}->worksheet({title => 'Mail Merge'});
+    $s->{y} = 1;
+
+    my @title_row = map { { row => $s->{y}, col => $x++, input_value => $_ } } @out_fields;
+    $s->{ws}->batchupdate_cell( @title_row );
+}
+
+my %emails_seen = ();
+
+sub notification_to_google {
+    my $n = $_[0];
+
+    my $s = $sheets{$n->{type}};
+
+    $n->{date} = format_date $n->{date};
+
+    my @parents = get_parents $n->{momefid};
+
+    foreach my $parent (@parents) {
+        if ($emails_seen{$parent->{email}}++) {
+            next;
+        }
+
+        my @row = ();
+        my @more_fields = qw/ date /;
+
+        # Parent info for invoice
+        foreach my $f (qw/ firstname lastname email /){
+            push @row, $parent->{$f};
+        }
+
+        # Blank columns to appease the mail merge app
+        foreach my $n (1..3) {
+            push @row, undef;
+        }
+
+        # Additional fields for invoice template
+        foreach my $f (@more_fields) {
+            push @row, $n->{$f};
+        }
+
+        my $x = 1;
+        $s->{y}++;
+        my @sheet_row = map { { row => $s->{y}, col => $x++, input_value => ce($_) } } @row;
+        $s->{ws}->batchupdate_cell( @sheet_row );
+
+    }
+}
+
+my @ids = $dbh->selectall_array(
+    qq{ select id from notification where superseded is null and sentdate is null; }
+);
+
+foreach my $id (@ids) {
+    my $n = get_notification($id->[0]);
+    notification_to_google($n);
+}
