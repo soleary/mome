@@ -1,20 +1,13 @@
-Tool to upload student roster
-Tool to upload parent list
-
----
-
 In order to delete, get active session, then a list of MOMEFIDs.
 On insert, skip if duplicate MOMEFID.
 Prompt for deletion?
 To reload, just delete MOMEFID.
 
 --
-
 When entering payments, do a secondary search if there no results.
 Check for students with the search terms and return them.
 
 --
-
 Next year, when parsing, add a class for Advanced Band to avoid
 having to put an in clause for the grades.  This will confine all
 the logic for what constitutes an Advanced Band to the parse-signups
@@ -24,7 +17,6 @@ for Advanced Band.  I guess classes could have a grade, but that's either
 denormalizing or not really a property for an individual class.
 
 --
-
 When a family's tuition changes, a debit must be added to make
 their previous debits equal to one of their future ones.  This could
 be automated.
@@ -32,3 +24,14 @@ be automated.
 2. Compare existing payments to new payment series pairwise
 3. Total up differences
 4. Add debit equal to total of all differences
+
+--
+Change roster makers to use 'upload' sheet.
+
+--
+Have notifications and invoices use $sheet->add_row() after checking 
+if the current header and one created by the script are the same.  If
+not, die and prompt to clear the sheet and run again.
+
+->add_row() uses hashes, so we'll need to change queries processing
+from arrays to hashes and do a fair bit of hash slicing.
