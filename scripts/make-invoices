@@ -4,8 +4,6 @@ use warnings;
 use strict;
 
 use Modern::Perl '2018';
-use Data::Dumper;
-$Data::Dumper::Sortkeys = 1;
 use DBI;
 use DateTime;
 
@@ -13,7 +11,7 @@ use lib 'lib';
 
 use MOME;
 
-my $TESTING = 1;
+my $TESTING;
 # Number of days one has to make a payment
 my $PAYMENT_INTERVAL = 5;
 my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
