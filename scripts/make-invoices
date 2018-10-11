@@ -12,7 +12,7 @@ use lib 'lib';
 
 use MOME;
 
-my $TESTING;
+my $TESTING = 1;
 # Number of days one has to make a payment
 my $PAYMENT_INTERVAL = 5;
 my $INV_THRESHOLD = 5;     # Balance amount under wich we don't send an invoice - they are still recorded in DB
@@ -140,12 +140,42 @@ my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachment
 my @inv_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
 my @out_fields = (@email_fields, 'invid',  @inv_fields);
 
-my $x = 1;
-my $y = 1;
-my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
-$invoice_sheet->batchupdate_cell( @title_row );
+my @cells = $invoice_sheet->cells({ 'max-row' => 1, 'return-end' => 1 });
+
+my @headers = map { $_->content() } @cells;
+
+my $headers_match = 1;
+
+if (@headers == 0 or @headers != @out_fields) {
+    $headers_match = 0;
+} else {
+    $headers_match = 1;
+    foreach my $i (0..$#headers) {
+        if ($headers[$i] ne $out_fields[$i]) {
+            $headers_match = 0;
+            last;
+        }
+    }
+}
+
+# Die if the headers don't match, but not if the sheet's blank
+die "Output fields do not match! Delete data and run again.\n" unless $headers_match or @headers == 0;
+
+unless (@headers) {
+    my $x = 1;
+    my $y = 1;
+    my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
+    $invoice_sheet->batchupdate_cell( @title_row );
+
+    warn "This looks like a new spreadsheet.  Make sure 'balance', 'tuition', and 'paypal' columns are formatted as 'Financial'";
+}
 
 my %emails_seen = ();
+
+# $y needs to start out as the index of the fist blank row, so we add one
+# Perl arrays are zero-indexed, Google sheet rows are one-indexed, so we add another one
+my @existing_rows = $invoice_sheet->rows();
+my $y = @existing_rows + 1 + 1;
 
 sub invoice_to_google {
     my $a = $_[0];
@@ -154,12 +184,12 @@ sub invoice_to_google {
     # But we don't want to show people that on their invoice
     $a->{balance} =~ s/^-//;
     $a->{balance} = sprintf '%.2f', $a->{balance};
+    $a->{tuition} = sprintf '%.2f', $a->{tuition};
     $a->{paypal} = paypal_amount $a->{balance};
     $a->{paypal_url} = paypal_url $a->{paypal};
     $a->{payment_word} = payment_word $a->{plan};
     ($a->{invoice_dt}, $a->{invoice_date}) = today();
-    ($a->{payment_dt}, $a->{payment_date}) = payment_date $a->{invoice_date};
-    $a->{tuition} = sprintf '%.2f', $a->{tuition};
+    ($a->{payment_dt}, $a->{payment_date}) = payment_date();
 
     if (defined $a->{nobill}) {
         if ($a->{nobill} eq 'I' or $a->{nobill} eq 'B') {
@@ -198,10 +228,15 @@ sub invoice_to_google {
             push @row, $a->{$f};
         }
 
+        # I would use ->add_row(\%), but for some damned reason it can't handle
+        # spaces in the "Column Names", the keys of the hash.
+        # Spaces must be present in the @email_fields to keep the Google Sheet Mail Merge
+        # application happy.
         my $x = 1;
-        $y++;
         my @sheet_row = map { { row => $y, col => $x++, input_value => ce($_) } } @row;
         $invoice_sheet->batchupdate_cell( @sheet_row );
+
+        $y++;
     }
 }
 
