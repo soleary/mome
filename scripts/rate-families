@@ -7,10 +7,6 @@ use Modern::Perl qw/2018/;
 use DBI;
 use Data::Dumper;
 use DateTime;
-use Math::Currency;
-
-Math::Currency->format('USD');
-Math::Currency->format('CURRENCY_SYMBOL','');
 
 my $MONTH = sprintf "%4d-%02d", DateTime->now()->year(),  DateTime->now()->month();
 my $DBFILE = 'sjsmusic.db';
