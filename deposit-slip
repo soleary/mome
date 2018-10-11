@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DBFILE="sjsmusic.db"
+
+sqlite3 $DBFILE << EOS
+.mode column
+.headers on
+select * from deposit_slip;
+EOS
