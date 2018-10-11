@@ -140,9 +140,8 @@ foreach my $s (values %sheets) {
 my %emails_seen = ();
 
 sub notification_to_google {
-    my $n = $_[0];
-
-    my $s = $sheets{$n->{type}};
+    my $n = shift;
+    my $s = shift;
 
     $n->{date} = format_date $n->{date};
 
@@ -185,5 +184,5 @@ my @ids = $dbh->selectall_array(
 
 foreach my $id (@ids) {
     my $n = get_notification($id->[0]);
-    notification_to_google($n);
+    notification_to_google($n, $sheets{$n->{type}});
 }
