@@ -104,12 +104,37 @@ my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachment
 my @out_fields = (@email_fields, qw/ date /);
 
 foreach my $s (values %sheets) {
-    my $x = 1;
     $s->{ws} = $s->{ws}->worksheet({title => 'Mail Merge'});
-    $s->{y} = 1;
+    my @cells = $s->{ws}->cells({ 'max-row' => 1, 'return-end' => 1 });
+    my @headers = map { $_->content() } @cells;
+    my $headers_match = 1;
 
-    my @title_row = map { { row => $s->{y}, col => $x++, input_value => $_ } } @out_fields;
-    $s->{ws}->batchupdate_cell( @title_row );
+    if (@headers == 0 or @headers != @out_fields) {
+        $headers_match = 0;
+    } else {
+        $headers_match = 1;
+        foreach my $i (0..$#headers) {
+            if ($headers[$i] ne $out_fields[$i]) {
+                $headers_match = 0;
+                last;
+            }
+        }
+    }
+
+    # Die if the headers don't match, but not if the sheet's blank
+    die "Output fields do not match! Delete data and run again.\n" unless $headers_match or @headers == 0;
+
+    unless (@headers) {
+        my $x = 1;
+        my $y = 1;
+        my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
+        $s->{ws}->batchupdate_cell( @title_row );
+    }
+
+    # $y needs to start out as the index of the fist blank row, so we add one
+    # Perl arrays are zero-indexed, Google sheet rows are one-indexed, so we add another one
+    my @rows = $s->{ws}->rows();
+    $s->{y} = @rows + 1 + 1;
 }
 
 my %emails_seen = ();
@@ -147,10 +172,10 @@ sub notification_to_google {
         }
 
         my $x = 1;
-        $s->{y}++;
         my @sheet_row = map { { row => $s->{y}, col => $x++, input_value => ce($_) } } @row;
         $s->{ws}->batchupdate_cell( @sheet_row );
 
+        $s->{y}++;
     }
 }
 
