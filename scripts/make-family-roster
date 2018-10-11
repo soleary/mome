@@ -16,7 +16,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $service = MOME::google_sheets();
 
-my $spreadsheet = $service->spreadsheet({title => 'upload'});
+my $spreadsheet = $service->spreadsheet({title => 'roster'});
 my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
 
 my @out_fields = ('Last Name', 'First Name', 'Phone', 'Email' );
@@ -29,7 +29,7 @@ $y++;
 
 my %emails_seen = ();
 
-my $parent_sth = $dbh->prepare(qq{select lastname, firstname, phone, email from parent_roster order by lastname, id;});
+my $parent_sth = $dbh->prepare(qq{select lastname, firstname, phone, email from parent_roster order by lastname, firstname;});
 $parent_sth->execute();
 
 while (my $parent = $parent_sth->fetch()) {

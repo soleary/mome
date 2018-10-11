@@ -15,7 +15,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $service = MOME::google_sheets();
 
-my $spreadsheet = $service->spreadsheet({title => 'roster'});
+my $spreadsheet = $service->spreadsheet({title => 'upload'});
 my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
 
 my @out_fields = ('Last Name', 'First Name', 'Grade', 'Contact');
