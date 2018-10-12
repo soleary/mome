@@ -18,7 +18,7 @@ my $service = MOME::google_sheets();
 my $spreadsheet = $service->spreadsheet({title => 'upload'});
 my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
 
-my @out_fields = ('Last Name', 'First Name', 'Grade', 'Contact');
+my @out_fields = ('Last Name', 'First Name', 'Grade', 'Parents', 'Contact');
 
 my $x = 1;
 my $y = 1;
@@ -44,7 +44,9 @@ while (my $student = $student_sth->fetch()) {
     my @student = $student->@*;
     my $momefid = shift @student;
 
-    $student[@student] = parent_email_link($momefid);
+    my @emails = parent_emails($momefid);
+    $student[@student] = join ', ', @emails;
+    $student[@student] = make_mailto(@emails);
 
     my @row = map { {row => $y, col => $x++, input_value => ce($_)} } @student;
     $out_sheet->batchupdate_cell( @row );
@@ -58,7 +60,7 @@ sub ce {
     return $_[0];
 }
 
-sub parent_email_link {
+sub parent_emails {
     my $momefid = $_[0];
 
     $email_sth->execute($momefid);
@@ -75,6 +77,12 @@ sub parent_email_link {
     }
     $email_sth->finish();
 
-    my $link = '=HYPERLINK("mailto:' . join ',', @emails;
+    return @emails;
+}
+
+sub make_mailto {
+    my @emails = @_;
+
+    my $link = '=HYPERLINK("mailto:' . join ', ', @emails;
     return $link . '", "Email Parents")';
 }
