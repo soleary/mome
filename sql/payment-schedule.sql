@@ -1,5 +1,6 @@
 create table payment_schedule(
-     schedule integer not null
+     id integer primary key
+    ,schedule integer not null
     ,date text not null
     ,number integer not null
 );
