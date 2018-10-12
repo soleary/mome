@@ -92,11 +92,12 @@ foreach my $type (sort keys %sths) {
                 push @row, hyperlink_emails($f, @emails);
             }
         }
+
+        push @row, join ', ', @emails;
         push @rows, [ @row ];
     }
     push @rows, [ ];
 }
-
 
 my $y = 1;
 foreach my $row (@rows) {
@@ -118,6 +119,6 @@ sub hyperlink_emails {
     my $type = shift;
     my @emails = @_;
 
-    my $link = qq{=HYPERLINK("mailto:?$type=} . join ',', @emails;
+    my $link = qq{=HYPERLINK("mailto:?$type=} . join ', ', @emails;
     return $link . qq{", "Email as } . ucfirst $type . qq{")};
 }
