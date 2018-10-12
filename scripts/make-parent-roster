@@ -33,18 +33,19 @@ my $parent_sth = $dbh->prepare(qq{select lastname, firstname, phone, email from 
 $parent_sth->execute();
 
 while (my $parent = $parent_sth->fetch()) {
-    my $x = 1;
+    my $p = [ $parent->@* ];
+    $p->[3] = ce($p->[3]);
 
-    $parent->[3] = ce($parent->[3]);
-
-    if ($emails_seen{$parent->[3]}++) {
-        $parent->[3] = '';
+    if ($emails_seen{$p->[3]}++) {
+        $p->[3] = '';
     }
 
-    $parent->[2] = make_phone_link($parent);
-    $parent->[3] = make_mailto($parent);
+    $p->[2] = make_phone_link($p);
+    $p->[3] = make_email_text($p);
+    $p->[4] = make_mailto($p);
 
-    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $parent->@*;
+    my $x = 1;
+    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $p->@*;
     $out_sheet->batchupdate_cell( @row );
 
     say $y;
@@ -71,4 +72,11 @@ sub make_phone_link {
 
     return '' unless $p->[2];
     return '="+'. $p->[2] . '"';
+}
+
+sub make_email_text {
+    my $p = $_[0];
+
+    return '' unless $p->[3];
+    return $p->[1] . ' ' . $p->[0] . ' ' . '<' . $p->[3] . '>';
 }
