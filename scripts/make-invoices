@@ -12,10 +12,11 @@ use lib 'lib';
 
 use MOME;
 
-my $TESTING = 1;
+my $TESTING;
 # Number of days one has to make a payment
 my $PAYMENT_INTERVAL = 5;
-my $INV_THRESHOLD = 5;     # Balance amount under wich we don't send an invoice - they are still recorded in DB
+# Balance amount under wich we don't send an invoice - they are still recorded in DB
+my $INV_THRESHOLD = 5;
 my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
@@ -35,7 +36,7 @@ unless (today_is_payment_date() or $F) {
     die "Today isn't a payment date and --force or --followup not specified.\n";
 }
 
-my $spreadsheet = $service->spreadsheet({title => 'Invoices'});
+my $spreadsheet = $service->spreadsheet({title => 'invoices'});
 my $invoice_sheet = $spreadsheet->worksheet({title => 'Mail Merge'});
 
 sub paypal_amount {
