@@ -9,7 +9,6 @@ use autodie;
 use DBI;
 use Term::ReadKey;
 use DateTime;
-use Data::Dumper;
 
 $|++;
 
