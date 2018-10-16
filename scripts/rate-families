@@ -8,7 +8,6 @@ use DBI;
 use Data::Dumper;
 use DateTime;
 
-my $MONTH = sprintf "%4d-%02d", DateTime->now()->year(),  DateTime->now()->month();
 my $DBFILE = 'sjsmusic.db';
 my $TESTING = 1;
 
@@ -17,7 +16,7 @@ my $tz = DateTime::TimeZone->new( name => 'local' );
 my $date = today();
 
 my $plan_info = $dbh->selectall_hashref(
-    "select schedule, number from payment_schedule where date = '$MONTH'", 'schedule');
+    "select schedule, number from payment_schedule where date = date('now', 'localtime');", 'schedule');
 
 sub get_account {
     my $momefid = $_[0];
@@ -31,6 +30,9 @@ sub get_account {
     ($a->{short_name}) = split '/', $a->{name};
 
     return $a;
+
+sub today_is_payment_date {
+    return @{$dbh->selectrow_arrayref(qq{ select count(*) from payment_schedule where date = date('now', 'localtime'); })}[0];
 }
 
 sub today {
@@ -114,12 +116,12 @@ sub already_rated {
     return 0;
 }
 
-sub plan_this_month {
-    return defined $plan_info->{$_[0]};
-}
+my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedule where date = date('now', 'localtime') });
+
+my $plan_string = $dbh->quote(join ', ', map { $_->[0] } @todays_plans);
 
 my @ids = $dbh->selectall_array(
-    qq{ select momefid from family where session = (select id from session where active is not null); }
+    qq{ select momefid, plan from family where plan in ($plan_string) and session = (select id from session where active is not null); }
 );
 
 foreach my $id (@ids) {
