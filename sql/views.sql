@@ -89,16 +89,23 @@ create view paid_up as
 
 drop view if exists total;
 create view total as
-      select '01' as Num, 'Tuition' as Item, sum(tuition) as 'Total' from family
-union select '02', 'Paid', sum(amount) as 'Total' from payment
-union select '03', 'Billed', substr(sum(amount), 2) from debit
-union select '04', 'Balance', sum(amount) from clean_ledger
-union select '05', 'Owed', sum(owed) from tuition_remaining
-union select '06', 'High', max(balance) from balance
-union select '07', 'Low', min(balance) from balance
-union select '08', 'Families', count(id) from family where session = (select id from session where active is not null)
-union select '09', 'Paid Up', count(*) from paid_up
-union select '10', 'Zero Balance', count(*) from balance where balance = 0
-union select '11', 'Negative Balance', count(*) from balance where balance < 0
-union select '12', 'Positive Balance', count(*) from balance where balance > 0
-union select '13', 'Invoices', count(id) from invoice order by Num;
+      select 01 as Num, 'Tuition         ' as Item, sum(tuition) as 'Total' from family
+union select 02, 'Owed', sum(owed) from tuition_remaining
+union select 03, 'Paid', sum(amount) as 'Total' from payment
+union select 04, 'Billed', substr(sum(amount), 2) from debit
+union select 05, 'Balance', sum(amount) from clean_ledger
+union select 06, 'High', max(balance) from balance
+union select 07, 'Low', min(balance) from balance
+union select 08, 'Families', count(id) from family where session = (select id from session where active is not null)
+union select 09, 'Parents', count(id) from person where type = 'parent'
+union select 10, 'Students', count(id) from person where type = 'student'
+union select 11, 'Payers', count(id) from person where type = 'payer'
+union select 12, 'Paid Up', count(*) from paid_up
+union select 13, 'Zero Balance', count(*) from balance where balance = 0
+union select 14, 'Negative Balance', count(*) from balance where balance < 0
+union select 15, 'Positive Balance', count(*) from balance where balance > 0
+union select 16, 'Invoices', count(id) from invoice
+union select 17, 'Notifications', count(id) from notification where sentdate is not null
+union select 18, 'Payments', count(id) from ledger where type != 'adjustment' and type != 'debit'
+union select 19, 'Debits', count(id) from ledger where type = 'debit'
+order by Num;
