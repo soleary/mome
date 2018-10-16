@@ -22,7 +22,7 @@ memoize 'format_date';
 
 my %sheets = (
     'paid-up' => {
-        ws => $service->spreadsheet({title => 'paid-up'}),
+        ws => $service->spreadsheet({title => 'paid-ups'}),
     },
     'payment' => {
         ws => $service->spreadsheet({title => 'payments'}),
