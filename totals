@@ -1,0 +1,5 @@
+#!/bin/bash
+
+DBFILE='sjsmusic.db'
+
+sqlite3 $DBFILE -header -column 'select * from total'
