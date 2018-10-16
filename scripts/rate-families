@@ -5,11 +5,12 @@ use strict;
 
 use Modern::Perl qw/2018/;
 use DBI;
-use Data::Dumper;
 use DateTime;
 
+# Testing should be truthy or undef so we don't end up with '' and such in the db.
+my $TESTING;
+my $DEBUG;
 my $DBFILE = 'sjsmusic.db';
-my $TESTING = 1;
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 my $tz = DateTime::TimeZone->new( name => 'local' );
@@ -21,15 +22,16 @@ my $plan_info = $dbh->selectall_hashref(
 sub get_account {
     my $momefid = $_[0];
 
-    my $a = $dbh->selectrow_hashref(
+    my $act = $dbh->selectrow_hashref(
         qq{ select momefid, tuition, plan, name, nobill from family where momefid = ?; },
         undef,
         $momefid,
     );
 
-    ($a->{short_name}) = split '/', $a->{name};
+    ($act->{short_name}) = split '/', $act->{name};
 
-    return $a;
+    return $act;
+}
 
 sub today_is_payment_date {
     return @{$dbh->selectrow_arrayref(qq{ select count(*) from payment_schedule where date = date('now', 'localtime'); })}[0];
@@ -42,13 +44,13 @@ sub today {
 }
 
 sub write_debit {
-    my $a = $_[0];
+    my $act = $_[0];
 
     my $debit_sth = $dbh->prepare_cached(
-        qq{ insert into ledger (momefid, amount, type, date) values (?,?,'debit',date('now'));}
+        qq{ insert into ledger (momefid, amount, type, date, testing) values (?,?,'debit',date('now'),?);}
     );
 
-    return $debit_sth->execute($a->{momefid}, '-' . $a->{payment});
+    return $debit_sth->execute($act->{momefid}, '-' . $act->{payment}, $act->{testing});
 }
 
 sub get_payments {
@@ -78,41 +80,17 @@ sub payment_number {
     return $plan_info->{$_[0]}{number};
 }
 
-#sub check_debits {
-#    $dbh->
-#
-# Things to add -
-#   Read the payment schedule and filter accounts
-#   Check each account prior to debit - if exists for this month, skip. (Ignore if they are all test.
-#   Add a force flag and a test flag
-
-
 # Nobill is 'R' for norate, 'I' for no invoice, 'B' for both
-sub already_rated {
-    my $a = $_[0];
+sub dont_rate {
+    my $act = $_[0];
 
-    if (defined $a->{nobill}) {
-        if ($a->{nobill} eq 'B' or $a->{nobill} eq 'R') {
-            warn 'Skipping MOMEFID ', $a->{momefid}, ' nobill ', $a->{nobill};
+    if (defined $act->{nobill}) {
+        if ($act->{nobill} eq 'B' or $act->{nobill} eq 'R') {
+            warn 'Skipping MOMEFID ', $act->{momefid}, ' nobill ', $act->{nobill};
             return 1;
         }
     }
 
-    my $last_debit_sth = $dbh->prepare_cached(
-        qq{ select date from ledger where type = 'debit' and momefid = ?;}
-    );
-
-    $last_debit_sth->execute($a->{momefid});
-
-    my $last_debit = $last_debit_sth->fetchrow_hashref();
-    $last_debit_sth->finish();
-
-    if (defined $last_debit->{date}) {
-        if (substr($last_debit->{date}, 0, 7) eq $MONTH) {
-            warn 'Skipping MOMEFID ', $a->{momefid}, " - already billed for $MONTH";
-            return 1;
-        }
-    }
     return 0;
 }
 
@@ -125,16 +103,14 @@ my @ids = $dbh->selectall_array(
 );
 
 foreach my $id (@ids) {
-    my $a = get_account($id->[0]);
+    my $act = get_account($id->[0]);
 
-    $a->{testing} = $TESTING;
+    $act->{testing} = $TESTING;
 
-    next if already_rated($a);
+    next if dont_rate($act);
 
-    $a->{payment} = get_payment($a);
+    $act->{payment} = get_payment($act);
 
-    if (plan_this_month($a->{plan})) {
-        printf "%-14s %9s %9s %s\n", $a->{short_name}, $a->{payment}, $a->{tuition}, $a->{plan};
-        write_debit($a);
-    }
+    printf "%-14s \$%.2f %6d %s\n", $act->{short_name}, $act->{payment}, $act->{tuition}, $act->{plan};
+    write_debit($act) unless $DEBUG;
 }
