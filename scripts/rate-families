@@ -13,6 +13,8 @@ my $DBFILE = 'sjsmusic.db';
 my $TESTING = 1;
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+my $tz = DateTime::TimeZone->new( name => 'local' );
+my $date = today();
 
 my $plan_info = $dbh->selectall_hashref(
     "select schedule, number from payment_schedule where date = '$MONTH'", 'schedule');
@@ -29,6 +31,12 @@ sub get_account {
     ($a->{short_name}) = split '/', $a->{name};
 
     return $a;
+}
+
+sub today {
+    my $dt = DateTime->now();
+    $dt->set_time_zone($tz);
+    return $dt;
 }
 
 sub write_debit {
