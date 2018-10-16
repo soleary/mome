@@ -36,7 +36,9 @@ unless (today_is_payment_date() or $F) {
     die "Today isn't a payment date and --force or --followup not specified.\n";
 }
 
-my $spreadsheet = $service->spreadsheet({title => 'invoices'});
+my $title = $F ? 'past-dues' : 'invoices';
+
+my $spreadsheet = $service->spreadsheet({title => $title});
 my $invoice_sheet = $spreadsheet->worksheet({title => 'Mail Merge'});
 
 sub paypal_amount {
