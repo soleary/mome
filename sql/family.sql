@@ -6,16 +6,17 @@ create table family(
     ,tuition integer
     ,plan integer
     ,permission text
-    ,nobill text
+    ,nobill text not null
     ,notes text
     ,testing text
 );
 
 /*
  * nobill values:
- * I - Do not invoice
- * R - Do not rate (free lessons)
- * B - Don't do either
+ * I  - Do not invoice
+ * R  - Do not rate (free lessons)
+ * B  - Don't do either
+ * '' - Normal billing (nulls caused problems with looking up a value for statement generation)
  */
 
 create table family_member(
