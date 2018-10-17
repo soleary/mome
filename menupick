@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+my $opt = { 1 => 0, n => 30 };
+getopts('1n:', $opt) or usage();
+my $pagesize = $opt->{n};
+
+chomp(my @item = <>);
+my $last_page = int(@item / $pagesize);
+$last_page-- if @item % $pagesize == 0;
+
+unless (@item) {
+  warn "No items supplied to menupick\n";
+  exit;
+}
+
+open my($ttyin), "<", "/dev/tty"
+  or do { warn "No tty: $!\n"; exit 1 };
+open my($ttyout), ">", "/dev/tty"
+  or do { warn "No tty: $!\n"; exit 1 };
+
+if ($opt->{1} && @item == 1) {
+  print @item, "\n";
+  exit;
+}
+
+sub show_menu {
+  my ($page, $set) = @_;
+  my %sh = map { $_ => 1 } @$set;
+  for my $i ($page*$pagesize .. ($page+1)*$pagesize-1) {
+    last unless defined $item[$i];
+    printf $ttyout "%2d. %s %s\n", $i, $sh{$i} ? "*" : " ", $item[$i];
+  }
+  if ($last_page > 0) {
+    print $ttyout ($page == $last_page ? "--END--\n" : "--more--\n");
+  }
+}
+show_menu(0);
+
+my $page = 0;
+my @set = ();
+while (1) {
+  my $in = prompt($ttyin, $ttyout);
+  my $newpage;
+  chomp $in;
+  last unless $in =~ /\S/;
+  my $quit = $in =~ s/!\s*$//;
+  my $show = $in =~ s/\?{2,}\s*$//;
+  if ($in =~ /^\s*\?\s*$/) {
+      print_set($ttyout, @set);
+      next;
+  } elsif ($in =~ /^\s*\*\s*$/) {
+      $in = join(" ", 0 .. $pagesize-1);
+  } elsif ($in =~ /[kKpP]/) {
+      $newpage = $page - 1;
+      $newpage = 0 if $newpage < 0;
+      $show++;
+  } elsif ($in =~ /[JjnN]/) {
+      $newpage = $page + 1;
+      $newpage = $last_page if $newpage > $last_page;
+      $show++;
+  }
+  modify($in, $page, \@set);
+  $page = $newpage if defined $newpage;
+  show_menu($page, \@set) if $show;
+  last if $quit;
+  last if @set == 1;
+}
+
+print join "\n", @item[@set], "";
+exit 0;
+
+sub prompt {
+  my ($in, $out) = @_;
+  print $out "> ";
+  my $txt = <$in>;
+  return $txt;
+}
+
+sub modify {
+  my ($mod, $page, $set) = @_;
+  my %set;
+  @set{@$set} = (1) x @$set; # URGH
+  #mod =~ tr/,/ /;
+  my @items = split /\s+/, $mod;
+  for my $item (@items) {
+    if ($item =~ /^\d+$/) {
+      $set{$item} = 1;
+    } elsif ($item =~ /^ (\d+) - (\d+) $/x) {
+      for ($1 .. $2) { $set{$_} = 1 }
+    } elsif ($item =~ /^ [-!] (\d+) $/x) {
+      delete $set{$1};
+    }
+  }
+  @$set = sort { $a <=> $b } keys %set;
+}
+
+sub print_set {
+    my ($out) = shift;
+    print $out "@_\n";
+}
