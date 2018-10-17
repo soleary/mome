@@ -1,0 +1,64 @@
+#!/bin/bash
+
+ID=$1
+DBFILE='sjsmusic.db'
+CLIENT='sqlite3'
+
+RUN="$CLIENT $DBFILE"
+PRE='-header -column'
+
+$RUN -header "select momefid as ID,
+                f.name as Name,
+                f.tuition as Tuition,
+                p1.o as 'Payment Plan',
+                p2.o as 'Photo Permission',
+                p3.o as 'Billing Status',
+                f.notes as Notes
+            from family as f, prettify as p1, prettify as p2, prettify as p3
+            where f.momefid = $ID and
+            (p2.type = 'a-n' and p2.i = f.permission) and
+            (p1.type = 'plan' and p1.i = f.plan) and
+            (p3.type = 'bill' and p3.i = f.nobill);" | column -t -s "|"
+echo
+echo "Parents"
+$RUN -header "select id as ID,
+                firstname || ' ' || lastname as Name,
+                phone as Phone,
+                email as 'Email Address'
+            from person
+            where type = 'parent' and
+            id in (select personid from family_member where momefid = $ID)
+            order by id;" | column -t -s "|"
+echo
+echo "Students"
+$RUN -header "select p.id as ID,
+            p.firstname || ' ' || p.lastname as Name,
+            p.grade as Grade,
+            cm.class as Class,
+            cm.instrument as Instrument,
+            d.name as Day
+        from person as p, class_member as cm, days_of_week as d
+        where p.id = cm.personid and
+        p.id in (select personid from family_member where momefid = $ID)
+        and d.id = cm.day
+        order by firstname;" | column -t -s "|"
+echo
+echo "Payment History"
+$RUN $PRE << EOS
+.width 10 11 12 10 10 10 43
+        select l.id as ID,
+            substr('             ', 0, 12 - length(printf('%.2f', l.amount))) || printf('%.2f', l.amount) as Amount,
+            p1.o as 'Payment Type',
+            l.checknum as 'Check Num',
+            l.date as Date,
+            l.depositdate as Deposited,
+            l.notes as Notes
+        from ledger as l, prettify as p1
+        where momefid = $ID and
+        (p1.type = 'ledger' and p1.i = l.type)
+        order by id;
+EOS
+echo '-----------------------'
+$RUN -line "select
+    substr('                ', 0, 14 - length(printf('%.2f', balance))) || printf('%.2f', balance) as Balance 
+    from balance where momefid = $ID;" | sed 's/=/ /;'
