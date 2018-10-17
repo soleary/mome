@@ -13,6 +13,6 @@ create table class_member(
     ,instrument text not null
     ,scheduled text
     ,experience text
-    ,day text not null
+    ,day integer not null
     ,testing text
 );
