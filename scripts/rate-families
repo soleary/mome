@@ -8,16 +8,13 @@ use DBI;
 use DateTime;
 
 # Testing should be truthy or undef so we don't end up with '' and such in the db.
-my $TESTING;
+my $TESTING = 1;
 my $DEBUG;
 my $DBFILE = 'sjsmusic.db';
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 my $tz = DateTime::TimeZone->new( name => 'local' );
 my $date = today();
-
-my $plan_info = $dbh->selectall_hashref(
-    "select schedule, number from payment_schedule where date = date('now', 'localtime');", 'schedule');
 
 sub get_account {
     my $momefid = $_[0];
@@ -33,8 +30,8 @@ sub get_account {
     return $act;
 }
 
-sub today_is_payment_date {
-    return @{$dbh->selectrow_arrayref(qq{ select count(*) from payment_schedule where date = date('now', 'localtime'); })}[0];
+sub is_charging_date {
+    return @{$dbh->selectrow_arrayref(qq{ select count(*) from payment_schedule where date = } . $dbh->quote($_[0]->ymd()) . ';' )}[0];
 }
 
 sub today {
@@ -47,10 +44,12 @@ sub write_debit {
     my $act = $_[0];
 
     my $debit_sth = $dbh->prepare_cached(
-        qq{ insert into ledger (momefid, amount, type, date, testing) values (?,?,'debit',date('now'),?);}
+        qq{ insert into ledger (momefid, amount, type, date, notes, testing) values (?,?,'debit',?,?,?);}
     );
 
-    return $debit_sth->execute($act->{momefid}, '-' . $act->{payment}, $act->{testing});
+    my $note = $act->{today}->month_name() . ' charges';
+
+    return $debit_sth->execute($act->{momefid}, '-' . $act->{payment}, $act->{today}->ymd(), $note, $act->{testing});
 }
 
 sub get_payments {
@@ -67,21 +66,23 @@ sub get_payments {
 }
 
 sub get_payment {
-    my $a = $_[0];
+    my $act = $_[0];
 
-    my @payments = get_payments($a->{tuition}, $a->{plan});
+    my @payments = get_payments($act->{tuition}, $act->{plan});
 
-    my $num = payment_number($a->{plan});
+    my $num = payment_number($act->{plan}, $act->{today});
 
     return $payments[$num - 1];
 }
 
 sub payment_number {
-    return $plan_info->{$_[0]}{number};
+    my $plan = $dbh->quote($_[0]);
+    my $today = $dbh->quote($_[1]->ymd());
+    return @{$dbh->selectrow_arrayref(qq{ select number from payment_schedule where date = $today and schedule = $plan; })}[0];
 }
 
 # Nobill is 'R' for norate, 'I' for no invoice, 'B' for both
-sub dont_rate {
+sub dont_charge {
     my $act = $_[0];
 
     if (defined $act->{nobill}) {
@@ -94,7 +95,11 @@ sub dont_rate {
     return 0;
 }
 
-my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedule where date = date('now', 'localtime') });
+my $today = today();
+
+die $today->ymd() . " isn't a charging/rating day.\n" unless is_charging_date($today);
+
+my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedule where date = } . $dbh->quote($today->ymd()) . ';');
 
 my $plan_string = $dbh->quote(join ', ', map { $_->[0] } @todays_plans);
 
@@ -106,8 +111,9 @@ foreach my $id (@ids) {
     my $act = get_account($id->[0]);
 
     $act->{testing} = $TESTING;
+    $act->{today} = $today;
 
-    next if dont_rate($act);
+    next if dont_charge($act);
 
     $act->{payment} = get_payment($act);
 
