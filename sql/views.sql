@@ -4,12 +4,6 @@ create view payment as
     where (type != 'debit' or type != 'adjustment')
         and validated is not null;
 
-drop view if exists adjusted_payment;
-create view adjusted_payment as
-    select * from ledger
-    where type != 'debit'
-        and validated is not null;
-
 drop view if exists debit;
 create view debit as
     select * from ledger
@@ -17,9 +11,10 @@ create view debit as
 
 drop view if exists clean_ledger;
 create view clean_ledger as
-        select * from adjusted_payment
-    union
-        select * from debit;
+    select * from ledger
+    where
+        (type != 'debit' and validated is not null)
+        or type = 'debit';
 
 drop view if exists balance;
 create view balance as
