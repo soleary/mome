@@ -62,3 +62,6 @@ echo '-----------------------'
 $RUN -line "select
     substr('                ', 0, 14 - length(printf('%.2f', balance))) || printf('%.2f', balance) as Balance 
     from balance where momefid = $ID;" | sed 's/=/ /;'
+$RUN -line "select
+substr('                ', 0, 14 - length(printf('%.2f', sum(p.amount) - f.tuition))) || printf('%.2f', sum(p.amount) - f.tuition) as 'Pay Off'
+    from payment as p, family as f where f.momefid = p.momefid and f.momefid = $ID;" | sed 's/=/ /;'
