@@ -26,7 +26,7 @@ $RUN -header "select id as ID,
                 phone as Phone,
                 email as 'Email Address'
             from person
-            where type = 'parent' and
+            where type != 'student' and
             id in (select personid from family_member where momefid = $ID)
             order by id;" | column -t -s "|"
 echo
