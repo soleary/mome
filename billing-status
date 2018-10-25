@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DBFILE='sjsmusic.db'
+
+sqlite3 $DBFILE -header -column "
+    select f.momefid, f.name, f.plan, f.tuition, p.o as nobill, f.notes 
+        from family as f, prettify as p 
+        where nobill != ''
+            and p.type = 'bill' and p.i = f.nobill;"
