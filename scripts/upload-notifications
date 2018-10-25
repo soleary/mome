@@ -186,3 +186,5 @@ foreach my $id (@ids) {
     my $n = get_notification($id->[0]);
     notification_to_google($n, $sheets{$n->{type}});
 }
+
+system './send-notifications';
