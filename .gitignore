@@ -1,3 +1,4 @@
 local/
+backup/
 billing-client-auth.json
 billing-client-token
