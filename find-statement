@@ -2,6 +2,6 @@
 
 NAME=$1
 
-MOMEFID=`sqlite3 sjsmusic.db "select distinct(momefid), name from family where momefid in (select momefid from family_member where personid in (select id from person where lastname like '%${NAME}%' or firstname like '%${NAME}%'));" | ./menupick -1`
+MOMEFID=`sqlite3 sjsmusic.db "select distinct(momefid), name from family where momefid in (select momefid from family_member where personid in (select id from person where lastname like '%${NAME}%' or firstname like '%${NAME}%'));" | menupick -1`
 
-./statement `echo ${MOMEFID} | f 1 "\|"`
+./statement `echo ${MOMEFID} | f 0 "\|"`
