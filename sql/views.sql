@@ -18,10 +18,20 @@ create view clean_ledger as
 
 drop view if exists balance;
 create view balance as
-    select l.momefid, f.name, sum(l.amount) as balance
+    select l.momefid, f.name, round(sum(l.amount), 8) as balance
     from clean_ledger as l, family as f
     where l.momefid = f.momefid
     group by l.momefid;
+
+drop view if exists family_balance;
+create view family_balance as
+    select l.momefid, f.name, f.nobill, printf("%.2f", sum(l.amount))
+    from ledger as l, family as f
+    where
+        ((l.type != 'debit' and l.validated is not null)
+        or l.type = 'debit')
+        and l.momefid = f.momefid
+        group by l.momefid;
 
 drop view if exists deposits;
 create view deposits as
@@ -35,15 +45,15 @@ create view deposits as
 
 drop view if exists deposit_slip;
 create view deposit_slip as
-        select type, count(type) as count, sum(amount) as amount
+        select type, count(type) as count, printf("%.2f", sum(amount)) as amount
         from deposits
         group by type
     union
-        select 'Total', count(*), sum(amount)
+        select 'Total', count(*), printf("%.2f", sum(amount))
         from deposits
         where type != 'paypal'
     union
-        select 'Grand Total', count(*), sum(amount)
+        select 'Grand Total', count(*), printf("%.2f", sum(amount))
         from deposits
         order by type desc;
 
@@ -84,13 +94,13 @@ create view paid_up as
 
 drop view if exists total;
 create view total as
-      select 01 as Num, 'Tuition         ' as Item, sum(tuition) as 'Total' from family
-union select 02, 'Owed', sum(owed) from tuition_remaining
-union select 03, 'Paid', sum(amount) as 'Total' from payment
-union select 04, 'Billed', substr(sum(amount), 2) from debit
-union select 05, 'Balance', sum(amount) from clean_ledger
-union select 06, 'High', max(balance) from balance
-union select 07, 'Low', min(balance) from balance
+      select 01 as Num, 'Tuition         ' as Item, printf("%.2f", sum(tuition)) as 'Total' from family
+union select 02, 'Owed', printf("%.2f", sum(owed)) from tuition_remaining
+union select 03, 'Paid', printf("%.2f", sum(amount)) as 'Total' from payment
+union select 04, 'Billed', printf("%.2f", sum(amount)) from debit
+union select 05, 'Balance', printf("%.2f", sum(amount)) from clean_ledger
+union select 06, 'High', printf("%.2f", max(balance)) from balance
+union select 07, 'Low', printf("%.2f", min(balance)) from balance
 union select 08, 'Families', count(id) from family where session = (select id from session where active is not null)
 union select 09, 'Parents', count(id) from person where type = 'parent'
 union select 10, 'Students', count(id) from person where type = 'student'
@@ -103,4 +113,5 @@ union select 16, 'Invoices', count(id) from invoice
 union select 17, 'Notifications', count(id) from notification where sentdate is not null
 union select 18, 'Payments', count(id) from ledger where type != 'adjustment' and type != 'debit'
 union select 19, 'Debits', count(id) from ledger where type = 'debit'
+union select 20, 'Transactions', count(id) from ledger
 order by Num;
