@@ -55,6 +55,20 @@ my %sths = (
                 (select personid from class_member where class = ?))
             order by lastname;},
     },
+    year    => {
+        enum      => qq{ select id, name from session where active is not null; },
+        enum_type => '',
+        result    => qq{
+        select p.firstname, p.lastname, p.email
+            from person as p, family as f, family_member as fm
+            where
+                p.type = 'parent'
+            and p.email is not null
+            and fm.momefid = f.momefid
+            and fm.personid = p.id
+            and f.session = ?
+            order by lastname;},
+    },
 );
 
 my @rows = ();
