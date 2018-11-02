@@ -20,11 +20,12 @@ my $service = MOME::google_sheets();
 my $spreadsheet = $service->spreadsheet({title => 'upload'});
 my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
 
-# enum       => query necessary to get a list of items to put in for placeholder in result statement
+# enum       => query to get the list of things to group by. First elements are the group names,
+#               second elements are bound to result query to produce list of desired email addresses.
 # enaum_type => If 'dow' then day of week numbers will be translated to day names.  Anything else is ignored.
-# result     => query to be executed with each row from enum statement, to produce the deisred groupings
+# result     => query to be executed with each row from enum statement, to produce the deisred group
 my %sths = (
-    day           => {
+    day     => {
         enum      => qq{ select distinct(day) from class_member order by day; },
         enum_type => 'dow',
         result    => qq{
@@ -39,7 +40,7 @@ my %sths = (
                         (select personid from class_member where day = ?))
                 order by lastname;},
     },
-    class         => {
+    class   => {
         enum      => qq{ select distinct(class) from class_member order by class; },
         enum_type => '',
         result    => qq{
@@ -86,7 +87,7 @@ foreach my $type (sort keys %sths) {
                 if ($sths{$type}{enum_type} eq 'dow') {
                     push @row, $DOW[$item->[0]];
                 } else {
-                    push @row, $item->[0];
+                    push @row, $item->[-1];
                 }
             } else {
                 push @row, hyperlink_emails($f, @emails);
