@@ -52,6 +52,8 @@ my %sths = (
                 p.type = 'parent'
             and p.email is not null
             and p.id = fm.personid
+            and fm.momefid = f.momefid
+            and f.session = (select id from session where active is not null)
             and fm.momefid in
                 (select momefid from family_member where personid in
                 (select personid from class_member where class = ?))
