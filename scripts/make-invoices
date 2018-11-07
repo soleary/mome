@@ -181,34 +181,33 @@ my @existing_rows = $invoice_sheet->rows();
 my $y = @existing_rows + 1 + 1;
 
 sub invoice_to_google {
-    my $a = $_[0];
+    my $act = $_[0];
 
     # Balances will be negative, since these are people that owe
     # But we don't want to show people that on their invoice
-    $a->{balance} =~ s/^-//;
-    $a->{balance} = sprintf '%.2f', $a->{balance};
-    $a->{tuition} = sprintf '%.2f', $a->{tuition};
-    $a->{paypal} = paypal_amount $a->{balance};
-    $a->{paypal_url} = paypal_url $a->{paypal};
-    $a->{payment_word} = payment_word $a->{plan};
-    ($a->{invoice_dt}, $a->{invoice_date}) = today();
-    ($a->{payment_dt}, $a->{payment_date}) = payment_date();
+    $act->{balance} =~ s/^-//;
+    $act->{balance} = sprintf '%.2f', $act->{balance};
+    $act->{tuition} = sprintf '%.2f', $act->{tuition};
+    $act->{paypal} = paypal_amount $act->{balance};
+    $act->{paypal_url} = paypal_url $act->{paypal};
+    $act->{payment_word} = payment_word $act->{plan};
+    ($act->{invoice_dt}, $act->{invoice_date}) = today();
+    ($act->{payment_dt}, $act->{payment_date}) = payment_date();
 
-    if (defined $a->{nobill}) {
-        if ($a->{nobill} eq 'I' or $a->{nobill} eq 'B') {
-            $a->{donotsend} = 1;
-        }
+    if ($act->{nobill} eq 'I' or $act->{nobill} eq 'B') {
+        $act->{donotsend} = 1;
     }
 
-    my @parents = get_parents $a->{momefid};
+    my @parents = get_parents $act->{momefid};
     foreach my $parent (@parents) {
         if ($emails_seen{$parent->{email}}++) {
             next;
         }
 
-        my $invid = record_to_db(%{$a}, %{$parent});
+        my $invid = record_to_db(%{$act}, %{$parent});
 
-        if ($a->{donotsend} or $a->{balance} < $INV_THRESHOLD) {
+        if ($act->{donotsend} or $act->{balance} < $INV_THRESHOLD) {
+            warn 'Not sending invoice for ' . $act->{momefid} . ' ' . $act->{short_name};
             next;
         }
 
@@ -228,7 +227,7 @@ sub invoice_to_google {
 
         # Additional fields for invoice template
         foreach my $f (@inv_fields) {
-            push @row, $a->{$f};
+            push @row, $act->{$f};
         }
 
         # I would use ->add_row(\%), but for some damned reason it can't handle
@@ -251,15 +250,15 @@ sub ce {
 sub get_account {
     my $momefid = $_[0];
 
-    my $a = $dbh->selectrow_hashref(
+    my $act = $dbh->selectrow_hashref(
         qq{ select momefid, tuition, plan, name, nobill from family where momefid = ?; },
         undef,
         $momefid,
     );
 
-    ($a->{short_name}) = split '/', $a->{name};
+    ($act->{short_name}) = split '/', $act->{name};
 
-    return $a;
+    return $act;
 }
 
 sub get_balance {
@@ -289,10 +288,11 @@ my @ids = $dbh->selectall_array(
 );
 
 foreach my $id (@ids) {
-    my $a = get_account($id->[0]);
-    ($a->{balance}, $a->{count}) = get_balance($id->[0]);
+    my $act = get_account($id->[0]);
 
-    if ($a->{balance} < 0) {
-        invoice_to_google($a);
+    ($act->{balance}, $act->{count}) = get_balance($id->[0]);
+
+    if ($act->{balance} < 0) {
+        invoice_to_google($act);
     }
 }
