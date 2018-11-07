@@ -29,23 +29,25 @@ my %sths = (
         enum      => qq{ select distinct(day) from class_member order by day; },
         enum_type => 'dow',
         result    => qq{
-            select firstname, lastname, email
-                from person as p, family_member as fm
-                where
-                    p.type = 'parent'
-                and p.email is not null
-                and p.id = fm.personid
-                and fm.momefid in
-                    (select momefid from family_member where personid in
-                        (select personid from class_member where day = ?))
-                order by lastname;},
+        select p.firstname, p.lastname, p.email
+            from person as p, family_member as fm, family as f
+            where
+                p.type = 'parent'
+            and p.email is not null
+            and p.id = fm.personid
+            and fm.momefid = f.momefid
+            and f.session = (select id from session where active is not null)
+            and fm.momefid in
+                (select momefid from family_member where personid in
+                    (select personid from class_member where day = ?))
+            order by lastname;},
     },
     class   => {
         enum      => qq{ select distinct(class) from class_member order by class; },
         enum_type => '',
         result    => qq{
         select firstname, lastname, email
-            from person as p, family_member as fm
+            from person as p, family_member as fm, family as f
             where
                 p.type = 'parent'
             and p.email is not null
