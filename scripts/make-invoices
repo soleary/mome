@@ -12,7 +12,7 @@ use lib 'lib';
 
 use MOME;
 
-my $TESTING;
+my $TESTING = 1;
 # Number of days one has to make a payment
 my $PAYMENT_INTERVAL = 5;
 # Balance amount under wich we don't send an invoice - they are still recorded in DB
@@ -283,9 +283,21 @@ sub get_balance {
     return $balance->{balance}, $count->{count};
 }
 
-my @ids = $dbh->selectall_array(
+my @ids_arr = $dbh->selectall_array(
     qq{ select momefid from family where session = (select id from session where active is not null); }
 );
+
+my @ids = map { $_->[0] } @ids_arr;
+
+my $id_str = join ',', @ids;
+
+my @count = $dbh->selectall_array(
+    qq{ select count(id) from family where momefid in ($id_str) and nobill != ''; }
+);
+
+if ($count[0]->[0]) {
+    warn "There is at least one account with non-standard billing status in this invoice queue. See `./billing-status` for details.";
+}
 
 foreach my $id (@ids) {
     my $act = get_account($id->[0]);
