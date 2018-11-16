@@ -12,8 +12,8 @@ use lib 'lib';
 
 use MOME;
 
-my $TESTING = 1;
-# Number of days one has to make a payment
+my $TESTING;
+# Number of days after payment date that a payment is due.
 my $PAYMENT_INTERVAL = 5;
 # Balance amount under wich we don't send an invoice - they are still recorded in DB
 my $INV_THRESHOLD = 5;
@@ -26,14 +26,14 @@ my $tz = DateTime::TimeZone->new( name => 'local' );
 my $service = MOME::google_sheets();
 
 my $F;
+my $E;
 GetOptions(
     'force|followup' => \$F,
+    'early'          => \$E,
 );
 
-my $date = today();
-
-unless (today_is_payment_date() or $F) {
-    die "Today isn't a payment date and --force or --followup not specified.\n";
+unless ($F or $E or today_is_payment_date()) {
+    die "Today isn't a payment date and --force, --followup or --early not specified.\n";
 }
 
 my $title = $F ? 'past-dues' : 'invoices';
@@ -77,22 +77,37 @@ sub get_parents {
     return @parents;
 }
 
-sub today {
-    my $dt = DateTime->now();
-    $dt->set_time_zone($tz);
-    return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
+sub invoice_date {
+    my $id = DateTime->now();
+
+    $id->set_time_zone($tz);
+
+    return $id, sprintf '%s, %s %s, %s', $id->day_name(), $id->month_name(), format_day($id->day()), $id->year();
 }
 
 sub payment_date {
-    my $dt = DateTime->now();
+    my $id; # Invoice Date
+    my $pd; # Payment Date
 
-    $dt->set_time_zone($tz);
-
-    if (today_is_payment_date()) {
-        $dt->add(days => $PAYMENT_INTERVAL);
+    if ($E) {
+        my ($next_billing_date) = $dbh->selectall_array(
+            qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
+        );
+        my ($y, $m, $d) = split '-', $next_billing_date->[0];
+        $id = DateTime->new(year => $y, month => $m, day => $d);
+    } else {
+        $id = DateTime->now();
     }
 
-    return $dt, sprintf '%s, %s %s, %s', $dt->day_name(), $dt->month_name(), format_day($dt->day()), $dt->year();
+    if ($F) {
+        $pd = $id;
+    } else {
+        $pd = $id->add(days => $PAYMENT_INTERVAL);
+    }
+
+    $pd->set_time_zone($tz);
+
+    return $pd, sprintf '%s, %s %s, %s', $pd->day_name(), $pd->month_name(), format_day($pd->day()), $pd->year();
 }
 
 sub today_is_payment_date {
@@ -114,10 +129,6 @@ sub format_day {
     }
 
     return $num . $suffix;
-}
-
-sub this_month {
-    return @{$dbh->selectrow_arrayref(qq{ select date('now', localtime'); })}[0] =~ s/-\d\{2\}$//;
 }
 
 sub payment_word {
@@ -191,7 +202,7 @@ sub invoice_to_google {
     $act->{paypal} = paypal_amount $act->{balance};
     $act->{paypal_url} = paypal_url $act->{paypal};
     $act->{payment_word} = payment_word $act->{plan};
-    ($act->{invoice_dt}, $act->{invoice_date}) = today();
+    ($act->{invoice_dt}, $act->{invoice_date}) = invoice_date();
     ($act->{payment_dt}, $act->{payment_date}) = payment_date();
 
     if ($act->{nobill} eq 'I' or $act->{nobill} eq 'B') {
@@ -300,9 +311,9 @@ if ($count[0]->[0]) {
 }
 
 foreach my $id (@ids) {
-    my $act = get_account($id->[0]);
+    my $act = get_account($id);
 
-    ($act->{balance}, $act->{count}) = get_balance($id->[0]);
+    ($act->{balance}, $act->{count}) = get_balance($id);
 
     if ($act->{balance} < 0) {
         invoice_to_google($act);
