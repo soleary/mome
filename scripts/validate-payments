@@ -57,6 +57,10 @@ foreach my $sth ($payments, $extra) {
             last;
         }
 
+        if ($key =~ /n/i) {
+            next;
+        }
+
         if ($payment->[0] == 0) {
             next;
         } else {
