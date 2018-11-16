@@ -6,15 +6,21 @@ use strict;
 use Modern::Perl qw/2018/;
 use DBI;
 use DateTime;
+use Getopt::Long;
 
 # Testing should be truthy or undef so we don't end up with '' and such in the db.
-my $TESTING = 1;
+my $TESTING;
 my $DEBUG;
 my $DBFILE = 'sjsmusic.db';
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 my $tz = DateTime::TimeZone->new( name => 'local' );
 my $date = today();
+
+my $F;
+GetOptions(
+    'force' => \$F,
+);
 
 sub get_account {
     my $momefid = $_[0];
@@ -70,7 +76,7 @@ sub get_payment {
 
     my @payments = get_payments($act->{tuition}, $act->{plan});
 
-    my $num = payment_number($act->{plan}, $act->{today});
+    my $num = payment_number($act->{plan}, $act->{billing_date});
 
     return $payments[$num - 1];
 }
@@ -97,11 +103,24 @@ sub dont_charge {
 
 my $today = today();
 
-die $today->ymd() . " isn't a charging/rating day.\n" unless is_charging_date($today);
+unless ($F or is_charging_date($today)) {
+    die $today->ymd() . " isn't a charging/rating day and --force not specified.\n";
+}
 
-my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedule where date = } . $dbh->quote($today->ymd()) . ';');
+my $billing_date = $today;
 
-my $plan_string = $dbh->quote(join ', ', map { $_->[0] } @todays_plans);
+unless (is_charging_date($today)) {
+    my ($next_billing_date) = $dbh->selectall_array(
+        qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
+    );
+    my ($y, $m, $d) = split '-', $next_billing_date->[0];
+
+    $billing_date = DateTime->new(year => $y, month => $m, day => $d);
+}
+
+my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedule where date = } . $dbh->quote($billing_date->ymd()) . ';');
+
+my $plan_string = join ', ', map { $dbh->quote($_->[0]) } @todays_plans;
 
 my @ids = $dbh->selectall_array(
     qq{ select momefid, plan from family where plan in ($plan_string) and session = (select id from session where active is not null); }
@@ -112,6 +131,7 @@ foreach my $id (@ids) {
 
     $act->{testing} = $TESTING;
     $act->{today} = $today;
+    $act->{billing_date} = $billing_date;
 
     next if dont_charge($act);
 
