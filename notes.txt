@@ -24,14 +24,3 @@ be automated.
 2. Compare existing payments to new payment series pairwise
 3. Total up differences
 4. Add debit equal to total of all differences
-
---
-Change roster makers to use 'upload' sheet.
-
---
-Have notifications and invoices use $sheet->add_row() after checking 
-if the current header and one created by the script are the same.  If
-not, die and prompt to clear the sheet and run again.
-
-->add_row() uses hashes, so we'll need to change queries processing
-from arrays to hashes and do a fair bit of hash slicing.
