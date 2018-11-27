@@ -35,11 +35,11 @@ create view family_balance as
 
 drop view if exists deposits;
 create view deposits as
-        select type, momefid, checknum, amount
+        select id, type, momefid, checknum, amount
         from clean_ledger
         where depositdate is null and type != 'debit'
     union
-        select type, '0', checknum, amount
+        select id, type, '0', checknum, amount
         from additional_deposits
         where depositdate is null;
 
