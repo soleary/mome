@@ -13,6 +13,7 @@ use lib 'lib';
 use MOME;
 
 my $TESTING;
+my $DEBUG;
 # Number of days after payment date that a payment is due.
 my $PAYMENT_INTERVAL = 5;
 # Balance amount under wich we don't send an invoice - they are still recorded in DB
@@ -212,6 +213,17 @@ sub invoice_to_google {
     my @parents = get_parents $act->{momefid};
     foreach my $parent (@parents) {
         if ($emails_seen{$parent->{email}}++) {
+            next;
+        }
+
+        if ($DEBUG) {
+            use Data::Dumper;
+            $Data::Dumper::Sortkeys = 1;
+            my @keys = grep { $_ !~ /_dt$/ } keys $act->%*;
+            my %rec;
+            @rec{@keys} = @{$act}{@keys};
+            print Dumper \%rec;
+            <>;
             next;
         }
 
