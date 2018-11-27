@@ -13,7 +13,7 @@ esac
 sqlite3 $DBFILE << EOS
 .mode column
 .headers on
-select * from balance $WHERE order by name;
+select momefid, name, printf("%.2f", balance) as balance from balance $WHERE order by name;
 .print
 select count(*) as families, sum(balance) as total from balance $WHERE;
 EOS
