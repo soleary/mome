@@ -16,7 +16,7 @@ create table prettify(
 
 insert into prettify (type, i, o)
 values
-/* Weekday numbers to names */
+/* Weekday numbers to names, day-of-week */
 ('dow', 0, 'Sunday'   ),
 ('dow', 1, 'Monday'   ),
 ('dow', 2, 'Tuesday'  ),
