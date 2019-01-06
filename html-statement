@@ -1,0 +1,109 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]
+  then
+    echo "No MOMEFID supplied"
+    echo "$0 <MOMEFID>"
+    exit
+fi
+
+ID=$1
+DBFILE='sjsmusic.db'
+CLIENT='sqlite3'
+
+RUN="$CLIENT $DBFILE"
+PRE='-header -html'
+
+echo "<HTML>
+<HEAD>
+    <style>
+        body {
+            background: white;
+            font-size: 100%;
+        }
+        table {
+            padding: 8px;
+        }
+        table th {
+            text-align: left;
+            text-decoration: underline;
+        }
+        table.payment tr:nth-child(odd) td {
+            background-color: #AAAAAA;   /* gray */
+            color: black;
+        }
+        table.payment tr:nth-child(even) td {
+            background-color: #DDDDDD;   /* silver */
+            color: black;
+        }
+        table.payment tr td:nth-child(3) {
+            text-align: right;
+        }
+        table.payment tr:last-child {
+            font-weight: bold;
+        }
+        table.payment tr:last-child td:nth-child(1) {
+            background-color: white;
+        }
+        td {
+            padding: 2px;
+        }
+        .head1 {
+            font-size: 2em;
+        }
+        .head2 {
+            font-size: 1.5em;
+        }
+        .heading {
+            text-align: center;
+        }
+    </style>
+</HEAD>
+<BODY>
+<DIV class="heading">
+<SPAN class="head1">Mrs. O'Leary's Music Education</SPAN>
+<BR>
+<SPAN class="head2">Family Financial Statement</SPAN>
+<BR><BR>
+</DIV>
+<TABLE class="family info">"
+$RUN $PRE "select
+                f.name as Family,
+                '$' || printf('%.2f', f.tuition) as 'Full Tuition',
+                p1.o as 'Payment Plan',
+                strftime('%m-%d-%Y', 'now', 'localtime') as 'Statement Date'
+            from family as f, prettify as p1
+            where f.momefid = $ID and
+            (p1.type = 'plan' and p1.i = f.plan);"
+echo "</TABLE>
+<TABLE class="student info">"
+$RUN $PRE "select
+            p.firstname || ' ' || p.lastname as 'Student Name',
+            p.grade as Grade,
+            cm.class as Class,
+            pp.o as Day
+        from person as p, class_member as cm, prettify as pp
+        where p.id = cm.personid and
+        p.id in (select personid from family_member where momefid = $ID)
+        and (pp.i = cm.day and pp.type = 'dow')
+        order by firstname;"
+echo "</TABLE>
+<TABLE class="payment">"
+$RUN $PRE << EOS
+        select 
+            strftime('%m-%d-%Y', l.date) as Date,
+            printf('%.2f', l.amount) as Amount,
+            p1.o as 'Transaction Type',
+            l.checknum as 'Check Num',
+            l.notes as Notes
+        from ledger as l, prettify as p1
+        where momefid = $ID and
+        (p1.type = 'statement' and p1.i = l.type)
+        order by l.id;
+EOS
+$RUN -html "select
+    'Balance' , printf('$%.2f', balance) as Balance 
+    from balance where momefid = $ID;"
+echo "</TABLE>
+</BODY>
+</HTML>"
