@@ -1,7 +1,14 @@
 #!/bin/bash
 
 NAME=$1
+EXEC="statement"
+
+if [ "$NAME" = "-h" ]
+    then
+        NAME=$2
+        EXEC="html-statement"
+fi
 
 MOMEFID=`sqlite3 sjsmusic.db "select distinct(momefid), name from family where momefid in (select momefid from family_member where personid in (select id from person where lastname like '%${NAME}%' or firstname like '%${NAME}%'));" | menupick -1`
 
-./statement `echo ${MOMEFID} | f 0 "\|"`
+./$EXEC `echo ${MOMEFID} | f 0 "\|"`
