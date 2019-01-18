@@ -1529,6 +1529,18 @@ DISTRIBUTIONS
       perl 5.006
       strict 0
       warnings 0
+  Text-CSV-1.99
+    pathname: I/IS/ISHIGAKI/Text-CSV-1.99.tar.gz
+    provides:
+      Text::CSV 1.99
+      Text::CSV::ErrorDiag 1.99
+      Text::CSV_PP 1.99
+    requirements:
+      ExtUtils::MakeMaker 0
+      IO::Handle 0
+      Test::Harness 0
+      Test::More 0.71
+      perl 5.006001
   Text-Glob-0.11
     pathname: R/RC/RCLAMP/Text-Glob-0.11.tar.gz
     provides:

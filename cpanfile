@@ -7,3 +7,4 @@ requires 'Term::Prompt'              => '1.04';
 requires 'JSON::MaybeXS'             => '1.004000';
 requires 'DateTime'                  => '1.50';
 requires 'Perl6::Slurp'              => '0.051005';
+requires 'Text::CSV'                 => '1.99';
