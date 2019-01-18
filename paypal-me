@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+
+my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
+
+sub paypal_amount {
+    my $cash = $_[0];
+
+    $cash += .30;
+    return sprintf "%.2f", $cash / ( 1 - .029 );
+}
+
+sub paypal_url {
+    my $amount = $_[0];
+
+    return "$PAYPAL_BASE$amount";
+}
+
+print paypal_url(paypal_amount($ARGV[0])), "\n";
