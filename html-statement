@@ -20,11 +20,12 @@ echo "<HTML>
         body {
             background: white;
             font-size: 100%;
+            font-family: Arial, sans-serif;
         }
         table {
-            padding: 8px;
+            border-spacing: 4px;
         }
-        table th {
+        th {
             text-align: left;
             text-decoration: underline;
         }
@@ -36,26 +37,25 @@ echo "<HTML>
             background-color: #DDDDDD;   /* silver */
             color: black;
         }
-        table.payment tr td:nth-child(3) {
+        table.payment tr td:nth-child(2) {
             text-align: right;
         }
         table.payment tr:last-child {
             font-weight: bold;
         }
-        table.payment tr:last-child td:nth-child(1) {
-            background-color: white;
+        table.payoff td {
+            background-color: #DDDDDD;  /* silver */
+            color: black;
+            font-weight: bold;
         }
         td {
-            padding: 2px;
+            cellspacing: 4px;
         }
         .head1 {
             font-size: 2em;
         }
         .head2 {
             font-size: 1.5em;
-        }
-        .heading {
-            text-align: center;
         }
     </style>
 </HEAD>
@@ -68,7 +68,7 @@ echo "<HTML>
 </DIV>
 <TABLE class="family info">"
 $RUN $PRE "select
-                f.name as Family,
+                f.name as 'Family Name',
                 '$' || printf('%.2f', f.tuition) as 'Full Tuition',
                 p1.o as 'Payment Plan',
                 strftime('%m-%d-%Y', 'now', 'localtime') as 'Statement Date'
@@ -89,8 +89,7 @@ $RUN $PRE "select
         order by firstname;"
 echo "</TABLE>
 <TABLE class="payment">"
-$RUN $PRE << EOS
-        select 
+$RUN $PRE "select 
             strftime('%m-%d-%Y', l.date) as Date,
             printf('%.2f', l.amount) as Amount,
             p1.o as 'Transaction Type',
@@ -99,11 +98,15 @@ $RUN $PRE << EOS
         from ledger as l, prettify as p1
         where momefid = $ID and
         (p1.type = 'statement' and p1.i = l.type)
-        order by l.id;
-EOS
+        order by l.id;"
 $RUN -html "select
-    'Balance' , printf('$%.2f', balance) as Balance 
+    'Balance' , printf('$%.2f', balance) as Balance
     from balance where momefid = $ID;"
+echo "</TABLE><BR>
+<TABLE class="payoff">"
+$RUN -html "select
+'Full Payoff', '$' || abs(printf('%.2f', sum(p.amount) - f.tuition))
+    from payment as p, family as f where f.momefid = p.momefid and f.momefid = $ID;"
 echo "</TABLE>
 </BODY>
 </HTML>"

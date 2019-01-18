@@ -1,0 +1,6 @@
+/bin/bash
+
+time for m in `./active-momefids`;
+    do mkdir -p family-statements/$m;
+    ./html-statement $m >| family-statements/$m/statement.html;
+done;
