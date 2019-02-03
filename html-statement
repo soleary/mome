@@ -105,7 +105,7 @@ $RUN -html "select
 echo "</TABLE><BR>
 <TABLE class="payoff">"
 $RUN -html "select
-'Full Payoff', '$' || abs(printf('%.2f', sum(p.amount) - f.tuition))
+'Full Payoff', '$' || printf('%.2f', abs(sum(p.amount) - f.tuition))
     from payment as p, family as f where f.momefid = p.momefid and f.momefid = $ID;"
 echo "</TABLE>
 </BODY>
