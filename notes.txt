@@ -26,18 +26,8 @@ be automated.
 4. Add debit equal to total of all differences
 
 --
-Add a billing status for "send regular invoices but not follow-ups"
-
---
-Make sure billing status is respected where it should be
-
---
 Review make-invoices.  Can we get away without --interval or --normal?
 
 --
 Add --dry-run to invoices - print the list but no DB, no sheet, less
 info than DEBUG.
-
---
-Have upload notifications tell you what types of notifications were
-uploaded.
