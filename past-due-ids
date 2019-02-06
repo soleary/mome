@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./query "select momefid from balance where balance < 0;" | grep ^[0-9]
