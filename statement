@@ -53,7 +53,7 @@ $RUN $PRE << EOS
             l.date as Date,
             l.depositdate as Deposited,
             l.notes as Notes
-        from ledger as l, prettify as p1
+        from clean_ledger as l, prettify as p1
         where momefid = $ID and
         (p1.type = 'ledger' and p1.i = l.type)
         order by id;
