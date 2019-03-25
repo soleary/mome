@@ -5,6 +5,7 @@ use strict;
 
 use Modern::Perl '2018';
 use DBI;
+use Text::CSV;
 
 use lib 'lib';
 
@@ -17,6 +18,9 @@ my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $service = MOME::google_sheets();
+
+open my $out, '>', 'groups.csv' or die "Can't open output: $!\n";
+my $csv = Text::CSV->new();
 
 my $spreadsheet = $service->spreadsheet({title => 'upload'});
 my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
@@ -137,15 +141,16 @@ foreach my $type (sort keys %sths) {
     push @rows, [ ];
 }
 
-my $y = 1;
+#my $y = 1;
 foreach my $row (@rows) {
-    my $x = 1;
+    $csv->say($out, $row);
+    #my $x = 1;
 
-    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $row->@*;
-    $out_sheet->batchupdate_cell( @row );
+    #my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $row->@*;
+    #$out_sheet->batchupdate_cell( @row );
 
-    say $y;
-    $y++;
+    #say $y;
+    #$y++;
 }
 
 sub ce {
