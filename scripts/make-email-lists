@@ -11,6 +11,7 @@ use lib 'lib';
 use MOME;
 
 my @DOW = qw/ Sunday Monday Tuesday Wednesday Thursday Friday Saturday /;
+my @GRADE = qw/ Zero First Second Third Fourth Fifth Sixth Seventh Eighth Ninth Tenth Eleventh Twelfth /;
 
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
@@ -22,10 +23,11 @@ my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
 
 # enum       => query to get the list of things to group by. First elements are the group names,
 #               second elements are bound to result query to produce list of desired email addresses.
-# enaum_type => If 'dow' then day of week numbers will be translated to day names.  Anything else is ignored.
+# enum_type  => If 'dow' then day of week numbers will be translated to day names, 'grade' will translate
+#               grade numbers to grade names.  Anything else is ignored.
 # result     => query to be executed with each row from enum statement, to produce the deisred group
 my %sths = (
-    day     => {
+    day  => {
         enum      => qq{ select distinct(day) from class_member order by day; },
         enum_type => 'dow',
         result    => qq{
@@ -57,6 +59,21 @@ my %sths = (
             and fm.momefid in
                 (select momefid from family_member where personid in
                 (select personid from class_member where class = ?))
+    grade   => {
+        enum      => qq{ select distinct(grade) from person where grade is not null order by grade; },
+        enum_type => 'grade',
+        result    => qq{
+        select firstname, lastname, email
+            from person as p, family_member as fm, family as f
+            where
+                p.type = 'parent'
+            and p.email is not null
+            and fm.momefid = f.momefid
+            and p.id = fm.personid
+            and f.session = (select id from session where active is not null)
+            and fm.momefid in
+                (select momefid from family_member where personid in
+                    (select id from person as p where p.grade = ?))
             order by lastname;},
     },
     year    => {
@@ -104,6 +121,8 @@ foreach my $type (sort keys %sths) {
             if ($f =~ /^By/) {
                 if ($sths{$type}{enum_type} eq 'dow') {
                     push @row, $DOW[$item->[0]];
+                } elsif ($sths{$type}{enum_type} eq 'grade') {
+                    push @row, $GRADE[$item->[0]];
                 } else {
                     push @row, $item->[-1];
                 }
