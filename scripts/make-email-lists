@@ -45,7 +45,7 @@ my %sths = (
             and f.session = (select id from session where active is not null)
             and fm.momefid in
                 (select momefid from family_member where personid in
-                    (select personid from class_member where day = ?))
+                    (select personid from class_member where day = ? and inactive is null))
             order by lastname;},
     },
     class   => {
@@ -62,7 +62,9 @@ my %sths = (
             and f.session = (select id from session where active is not null)
             and fm.momefid in
                 (select momefid from family_member where personid in
-                (select personid from class_member where class = ?))
+                (select personid from class_member where class = ? and inactive is null))
+            order by lastname;},
+    },
     grade   => {
         enum      => qq{ select distinct(grade) from person where grade is not null order by grade; },
         enum_type => 'grade',
