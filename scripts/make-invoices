@@ -131,7 +131,7 @@ sub format_day {
         if (/1$/)   { $suffix = 'st'; last; }
         if (/2$/)   { $suffix = 'nd'; last; }
         if (/3$/)   { $suffix = 'rd'; last; }
-        default { $suffix .= 'th' }
+        default { $suffix = 'th' }
     }
 
     return $num . $suffix;
