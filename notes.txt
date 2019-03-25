@@ -31,3 +31,7 @@ Review make-invoices.  Can we get away without --interval or --normal?
 --
 Add --dry-run to invoices - print the list but no DB, no sheet, less
 info than DEBUG.
+
+--
+Fix upload-notifications to properly advise the user about
+notification types.
