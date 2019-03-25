@@ -104,6 +104,7 @@ push @rows, [ 'Parent Email Groups' ];
 push @rows, [ ];
 
 foreach my $type (sort keys %sths) {
+    print "$type\n";
     my $enum_sth = $dbh->prepare($sths{$type}{enum});
     $enum_sth->execute();
 
