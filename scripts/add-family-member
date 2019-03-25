@@ -83,9 +83,14 @@ sub get_momefid {
     return $momefid[0];
 }
 
+sub ce {
+    return undef unless $_[0];
+    return $_[0];
+}
+
 sub add_family_member {
     my $old_id = shift;
-    my @person = @_;
+    my @person = map { ce($_) } @_;
 
     my $momefid = get_momefid($old_id);
 
