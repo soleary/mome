@@ -30,11 +30,16 @@ my $tz = DateTime::TimeZone->new( name => 'local' );
 
 my $service = MOME::google_sheets();
 
-my $F;
-my $E;
+my $F;  # Force/Followup - Generate invoices after a non-scheduled payment day and have the PAYMENT_INTERVAL set to 0
+my $E;  # Early - Generate invoices early, keep the PAYMENT_INTERVAL at default
+my $I;  # Interval - For use with $E or $F, to override PAYMENT_INTERVAL
+my $N;  # Normal - For use with Force/Followup - put in the normal invloice sheet, not the past due.
+
 GetOptions(
     'force|followup' => \$F,
     'early'          => \$E,
+    'interval=i'     => \$I,
+    'normal'         => \$N,
 );
 
 unless ($F or $E or today_is_payment_date()) {
@@ -96,17 +101,25 @@ sub payment_date {
     my $pd; # Payment Date
 
     if ($E) {
-        my ($next_billing_date) = $dbh->selectall_array(
-            qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
-        );
-        my ($y, $m, $d) = split '-', $next_billing_date->[0];
-        $id = DateTime->new(year => $y, month => $m, day => $d);
+        if ($I) {
+            $pd = $id->add(days => $I);
+        } else {
+            my ($next_billing_date) = $dbh->selectall_array(
+                qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
+            );
+            my ($y, $m, $d) = split '-', $next_billing_date->[0];
+            $id = DateTime->new(year => $y, month => $m, day => $d);
+        }
     } else {
         $id = DateTime->now();
     }
 
     if ($F) {
-        $pd = $id;
+        if ($I) {
+            $pd = $id->add(days => $I);
+        } else {
+            $pd = $id;
+        }
     } else {
         $pd = $id->add(days => $PAYMENT_INTERVAL);
     }
