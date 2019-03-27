@@ -53,7 +53,7 @@ sub write_debit {
         qq{ insert into ledger (momefid, amount, type, date, notes, testing) values (?,?,'debit',?,?,?);}
     );
 
-    my $note = $act->{today}->month_name() . ' charges';
+    my $note = $act->{today}->month_name() . ' tuition';
 
     return $debit_sth->execute($act->{momefid}, '-' . $act->{payment}, $act->{today}->ymd(), $note, $act->{testing});
 }
