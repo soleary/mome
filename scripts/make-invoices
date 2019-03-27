@@ -223,6 +223,7 @@ sub invoice_to_google {
     $act->{paypal} = paypal_amount $act->{balance};
     $act->{paypal_url} = paypal_url $act->{paypal};
     $act->{payment_word} = payment_word $act->{plan};
+    $act->{attachment} = '\\input\\family-statements\\' . $act->{momefid} . '\\statement.html';
     ($act->{invoice_dt}, $act->{invoice_date}) = invoice_date();
     ($act->{payment_dt}, $act->{payment_date}) = payment_date();
 
@@ -267,8 +268,11 @@ sub invoice_to_google {
             push @row, $parent->{$f};
         }
 
+        # Path to the family's statement
+        push @row, $act->{attachment};
+
         # Blank columns to appease the mail merge app
-        foreach my $n (1..3) {
+        foreach my $n (1..2) {
             push @row, undef;
         }
 
