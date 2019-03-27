@@ -250,7 +250,9 @@ sub invoice_to_google {
         my $invid = record_to_db(%{$act}, %{$parent});
 
         if ($act->{donotsend}) {
-            warn 'Not sending invoice for ' . $act->{momefid} . ' ' . $act->{short_name};
+            my @afields = qw( momefid nobill balance );
+            my @pfields = qw( firstname lastname );
+            warn sprintf "Not sending invoice for family %d - status %s - balance %.2f - %s %s\n", @{$act}{@afields}, @{$parent}{@pfields};
             next;
         }
 
@@ -340,7 +342,7 @@ my @count = $dbh->selectall_array(
 );
 
 if ($count[0]->[0]) {
-    warn "There is at least one account with non-standard billing status in this invoice queue. See `./billing-status` for details.";
+    warn "There is at least one account with non-standard billing status in this invoice queue. See `./billing-status` for details.\n";
 }
 
 foreach my $id (@ids) {
