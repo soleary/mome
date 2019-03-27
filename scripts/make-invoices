@@ -226,7 +226,11 @@ sub invoice_to_google {
     ($act->{invoice_dt}, $act->{invoice_date}) = invoice_date();
     ($act->{payment_dt}, $act->{payment_date}) = payment_date();
 
-    if ($act->{nobill} eq 'I' or $act->{nobill} eq 'B' or $act->{balance} < $INVOICE_THRESHOLD) {
+    # All the reasons we don't send invoices to people
+    if ($act->{nobill} eq 'I' or # I means't don't invoice
+        $act->{nobill} eq 'B' or # B means both. Don't rate or invoice
+        $act->{balance} < $INVOICE_THRESHOLD or  # Don't send if balance is under threshold
+        ($F and $act->{nobill} eq 'F')) {  # If we are in follow-up mode, F means don't send follow-up
         $act->{donotsend} = 1;
     }
 
