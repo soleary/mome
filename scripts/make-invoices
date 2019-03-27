@@ -362,3 +362,6 @@ foreach my $id (@ids) {
         invoice_to_google($act);
     }
 }
+
+# So I don't forget to mark them sent
+system './send-invoices';
