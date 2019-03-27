@@ -67,11 +67,12 @@ while (1) {
 
     ADDITIONAL:
     my %payment_types = (
-        a => { d => 'Adjustment' },
         d => { d => 'Debit' },
+        e => { d => 'Credit' },
         p => { d => 'PayPal' },
         c => { d => 'Cash' },
         k => { d => 'Check', c => sub {print 'Enter Check Numnber; '; chomp(my $n = <STDIN>); return ['check', $n];} },
+        r => { d => 'Refund' },
     );
 
     my $type = prompt('Payment type:', %payment_types);
@@ -79,7 +80,7 @@ while (1) {
     print "Amount: ";
     chomp(my $amount = <STDIN>);
 
-    if ($type->[0] eq 'debit' and $amount > 0) {
+    if (($type->[0] eq 'debit' or $type->[0] eq 'refund') and $amount > 0) {
         $amount = '-' . $amount;
     }
 
@@ -151,7 +152,7 @@ sub payment_to_ledger {
             $dbh->last_insert_id('','', 'ledger', 'id'));
     }
 
-    if ($pmt{type} eq 'debit') {
+    if ($pmt{type} eq 'debit' or $pmt{type} eq 'refund' or $pmt{type} eq 'credit') {
         my $note = simple_prompt('Note: ');
         $ledger_note_sth->execute($note,
             $dbh->last_insert_id('', '', 'ledger', 'id'));
