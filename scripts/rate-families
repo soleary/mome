@@ -107,6 +107,10 @@ unless ($F or is_charging_date($today)) {
     die $today->ymd() . " isn't a charging/rating day and --force not specified.\n";
 }
 
+print "This will issue charges to all families for the current month. Are you sure?\n";
+print "ctrl+c to quit, <enter> to continue\n";
+<>;
+
 my $billing_date = $today;
 
 unless (is_charging_date($today)) {
