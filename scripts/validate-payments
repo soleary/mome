@@ -61,7 +61,7 @@ foreach my $sth ($payments, $extra) {
             next;
         }
 
-        if ($payment->[0] == 0) {
+        if ($payment->[0] == 0 or $payment->[2] eq 'credit') {
             next;
         } else {
             make_notification($payment);
