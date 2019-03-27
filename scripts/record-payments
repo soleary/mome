@@ -171,7 +171,9 @@ sub simple_prompt {
 sub prompt {
     my $prompt = shift;
 
-    # Takes a hash of things to pick from.
+    # Takes a hash of things to pick from. Each key will be
+    # displayed on a single line in sort() order, with the contents
+    # of {d} displayed next to it.
     # Each entry in the hash must have a value for {d}.
     # You have the right to a {v}.  If you cannot afford one,
     # one will be appointed to you by the court.
@@ -180,8 +182,7 @@ sub prompt {
     # $hash{$key}{v} = The value to be returned by this sub if this item is selected
     # $hash{$key}{c} = Optional code reference to be run if this item is selected
     #                  The data in {v} will be passed into this coderef and it's
-    #                  result returned by this sub
-    #
+    #                  result assigned to {v} after it exits
 
     # Don't actually prompt if there's only one value
     if (@_ == 2) {
