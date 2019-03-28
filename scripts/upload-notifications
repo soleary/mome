@@ -6,7 +6,6 @@ use strict;
 use Modern::Perl '2018';
 use DBI;
 use DateTime;
-use Memoize;
 
 use lib 'lib';
 
@@ -17,8 +16,6 @@ my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $service = MOME::google_sheets();
-
-memoize 'format_date';
 
 my %sheets = (
     'paid-up' => {
