@@ -1,0 +1,2 @@
+rm -rf family-statements
+rm -f invoices.csv paid-up.csv payment.csv groups.csv
