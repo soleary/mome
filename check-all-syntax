@@ -1,4 +1,4 @@
 #!/bin/bash
 
 find lib/ -name '*.pm' -exec carton run perl -c {} \;
-find scripts/ -name '*.pl' -exec carton run perl -c {} \;
+find scripts/ -type f -not -path "*/\.*" -exec carton run perl -c {} \;
