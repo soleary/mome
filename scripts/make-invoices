@@ -40,6 +40,8 @@ GetOptions(
     'early'          => \$E,
     'interval=i'     => \$I,
     'normal'         => \$N,
+    'testing'        => \$TESTING,
+    'debug'          => \$DEBUG,
 );
 
 unless ($F or $E or today_is_payment_date()) {
