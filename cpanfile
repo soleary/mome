@@ -1,4 +1,4 @@
-requires 'perl'                      => '5.28.0';
+requires 'perl'                      => '5.28.2';
 requires 'Net::Google::DataAPI'      => '0.2805';
 requires 'Net::Google::Spreadsheets' => '0.1501';
 requires 'Math::Currency'            => '0.52';
