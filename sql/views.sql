@@ -42,7 +42,8 @@ create view deposits as
     union
         select id, type, '0', checknum, amount
         from additional_deposits
-        where depositdate is null;
+        where depositdate is null
+    order by id;
 
 drop view if exists deposit_slip;
 create view deposit_slip as
