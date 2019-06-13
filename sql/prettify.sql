@@ -45,6 +45,7 @@ values
 
 /* Billing statuses */
 ('bill', 'B', 'Both'          ),
+('bill', 'F', "Don't Followup"),
 ('bill', 'R', "Don't Rate"    ),
 ('bill', 'I', "Don't Invoice" ),
 ('bill', '', 'Normal'         ),
