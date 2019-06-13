@@ -1,7 +1,7 @@
 drop view if exists payment;
 create view payment as
     select * from ledger
-    where (type != 'debit' or type != 'adjustment')
+    where (type != 'debit' or type != 'credit' or type != 'refund')
         and validated is not null;
 
 drop view if exists debit;
