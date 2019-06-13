@@ -13,8 +13,9 @@ drop view if exists clean_ledger;
 create view clean_ledger as
     select * from ledger
     where
-        (type != 'debit' and validated is not null)
-        or type = 'debit';
+        (((type != 'debit' or type != 'refund') and validated is not null)
+        or type = 'debit') and
+        "date" <= date('now', 'localtime');
 
 drop view if exists balance;
 create view balance as
