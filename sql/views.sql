@@ -66,6 +66,7 @@ create view student_roster as
     where p.id = cm.personid
         and f.momefid = fm.momefid
         and fm.personid = p.id
+        and cm.inactive is null
     order by p.lastname, p.firstname;
 
 drop view if exists parent_roster;
