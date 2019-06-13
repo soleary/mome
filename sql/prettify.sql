@@ -56,12 +56,20 @@ values
 ('plan', 9, 'Nine Payments'),
 
 /* Ledger entry types */
-('ledger', 'debit',      'Debit'     ),
-('ledger', 'credit',     'Credit'    ),
-('ledger', 'adjustment', 'Adjustment'),
-('ledger', 'check',      'Check'     ),
-('ledger', 'cash',       'Cash'      ),
-('ledger', 'paypal',     'PayPal'    ),
+('ledger', 'debit',  'Debit' ),
+('ledger', 'credit', 'Credit'),
+('ledger', 'check',  'Check' ),
+('ledger', 'cash',   'Cash'  ),
+('ledger', 'paypal', 'PayPal'),
+('ledger', 'refund', 'Refund'),
+
+/* Ledger entry types for customer statements */
+('statement', 'debit',  'Tuition Charge'),
+('statement', 'credit', 'Account Credit'),
+('statement', 'check',  'Check Payment' ),
+('statement', 'cash',   'Cash Payment'  ),
+('statement', 'paypal', 'PayPal Payment'),
+('statement', 'refund', 'Refund'        ),
 
 /* Garbage line, but I don't have to remember that
  * the last line above should end with a ';' */
