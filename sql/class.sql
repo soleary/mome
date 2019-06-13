@@ -14,5 +14,6 @@ create table class_member(
     ,scheduled text
     ,experience text
     ,day integer not null
+    ,inactive text
     ,testing text
 );
