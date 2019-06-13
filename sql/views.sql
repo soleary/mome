@@ -61,7 +61,7 @@ create view deposit_slip as
 
 drop view if exists student_roster;
 create view student_roster as
-    select f.momefid, cm.id as classid, p.id, p.firstname, p.lastname, p.grade, cm.class, cm.instrument, cm.experience
+    select f.momefid, cm.id as classid, p.id as personid, p.firstname, p.lastname, p.grade, cm.class, cm.instrument, cm.experience, cm.day, cm.inactive
     from person as p, class_member as cm, family as f, family_member as fm
     where p.id = cm.personid
         and f.momefid = fm.momefid
