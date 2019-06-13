@@ -81,9 +81,9 @@ create view parent_roster as
 
 drop view if exists paid_vs_tuition;
 create view paid_vs_tuition as
-    select f.momefid, f.name, sum(a.amount) as paid, f.tuition
-    from family as f, adjusted_payment as a
-    where f.momefid = a.momefid group by a.momefid;
+    select f.momefid, f.name, printf("%.2f", sum(p.amount)) as paid, f.tuition
+    from family as f, payment as p
+    where f.momefid = p.momefid group by p.momefid;
 
 drop view if exists tuition_remaining;
 create view tuition_remaining as
