@@ -92,7 +92,7 @@ create view tuition_remaining as
 drop view if exists paid_up;
 create view paid_up as
     select * from tuition_remaining
-    where owed = 0
+    where owed >= 0
     order by name;
 
 drop view if exists total;
