@@ -111,7 +111,7 @@ sub simple_prompt {
     print "$string";
     chomp( my $resp = <STDIN> );
 
-    return $resp or undef;
+    return $resp || undef;
 }
 
 sub prompt {
