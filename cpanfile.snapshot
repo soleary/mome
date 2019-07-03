@@ -537,12 +537,6 @@ DISTRIBUTIONS
       Test::More 0.98
       parent 0
       perl 5.008001
-  Devel-PPPort-3.42
-    pathname: X/XS/XSAWYERX/Devel-PPPort-3.42.tar.gz
-    provides:
-      Devel::PPPort 3.42
-    requirements:
-      ExtUtils::MakeMaker 0
   Devel-StackTrace-2.03
     pathname: D/DR/DROLSKY/Devel-StackTrace-2.03.tar.gz
     provides:
