@@ -1,78 +1,44 @@
 #!/usr/bin/env perl
 
-use feature 'say';
+use Modern::Perl '2018';
+use DBI;
+use Excel::Writer::XLSX;
 
-use warnings;
-use strict;
+my $SOURCE = 'responses.csv';
+my $OUTFILE = 'Tuition-List.xlsx';
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-use lib qw/lib/;
+my $wb = Excel::Writer::XLSX->new($OUTFILE);
+my $norm = $wb->add_format( font => 'Arial', size => 10 );
+my $bold = $wb->add_format( font => 'Arial', size => 10, bold => 1 );
+my $ws = $wb->add_worksheet();
 
-use MOME;
+my $x = 0;
+my $y = 0;
 
-my $service = MOME::google_sheets();
+$ws->write($x, $y, '2019-2020 Tuition List', $bold);
+$x = 1;
+$ws->write($x, $y, [ qw/ Tuition ID Family / ], $norm);
+$x = 2;
 
-my $spreadsheet = $service->spreadsheet(
-    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
-);
+my $student_sth = $dbh->prepare(q{ select firstname, lastname, grade, class, instrument
+    from student_roster where momefid = ? order by grade, firstname, instrument });
 
-my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
+my $family_sth = $dbh->prepare(q{ select momefid, name from family where
+    session = (select id from session where active is not null)
+    order by name });
 
-my @rows = $worksheet->rows;
+$family_sth->execute();
 
-# Get my rownames and then ditch the row they are in
-my %f = reverse %{$rows[0]->content};
-pop @rows;
-
-my @parent_fields = qw/ first last /;
-my @fixed_fields = qw/ first last /;
-my @ins_fields = qw/ ins /;
-
-my @out = ();
-foreach my $row (@rows) {
-    if ($row->content->{$f{testing}}) {
-        next;
+while ( my @family = $family_sth->fetchrow_array() ) {
+    $y = 1;
+    $student_sth->execute($family[0]);
+    $ws->write($x, $y, \@family, $bold);
+    while ( my @student = $student_sth->fetchrow_array() ) {
+        $x++; $y = 2;
+        $ws->write($x, $y, \@student, $norm);
     }
-
-    my %row = %{$row->content};
-    foreach my $sn (1..3) {
-        foreach my $in (1..3) {
-            my @pfields = map { 'p1' . $_ } @parent_fields;
-            my @sfields = map { 's' . $sn . $_ } @fixed_fields;
-            my @infields = map { 's' . $sn . $_ . $in } @ins_fields;
-            my @fields = ('momefid', @pfields, @sfields, @infields);
-
-            #print Dumper \@fields;
-            print $row{ $f{momefid} }, "\n";
-
-            if (grep { /\w/ } @row{ @f{@infields} }) {
-                push @out, [ @row{ @f{@fields} } ];
-                #print Dumper \@row{ @f{@fields} };
-            } else {
-                next;
-            }
-        }
-    }
-}
-
-my @out_fields = qw/ momefid first last first last instrument tuition /;
-
-my $out_sheet = $service->spreadsheet({title => 'Tuition List'});
-my $o = $out_sheet->worksheet({title => 'Sheet1'});
-
-my $x = 1;
-my @title_row = map { { row => 1, col => $x++, input_value => ucfirst($_) } } @out_fields;
-
-$o->batchupdate_cell( @title_row );
-
-my $y = 2;
-foreach my $row (@out) {
-
-    my $x = 1;
-    my @row = map { { row => $y, col => $x++, input_value => $_ } } $row->@*;
-    $o->batchupdate_cell( @row );
-    $y++;
-    #my %r = ();
-    #@r{@out_fields} = $row->@*;
-
-    #$o->add_row( { %r } );
+    $student_sth->finish();
+    $x++;
 }

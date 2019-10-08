@@ -9,10 +9,6 @@ use Getopt::Long;
 use DateTime;
 use Text::CSV;
 
-use lib 'lib';
-
-use MOME;
-
 my $TESTING;
 my $DEBUG;
 # Number of days after payment date that a payment is due.
@@ -27,8 +23,6 @@ open my $out, '>', 'invoices.csv' or die "Can't open output: $!\n";
 my $csv = Text::CSV->new();
 
 my $tz = DateTime::TimeZone->new( name => 'local' );
-
-my $service = MOME::google_sheets();
 
 my $F;  # Force/Followup - Generate invoices after a non-scheduled payment day and have the PAYMENT_INTERVAL set to 0
 my $E;  # Early - Generate invoices early, keep the PAYMENT_INTERVAL at default
@@ -47,12 +41,6 @@ GetOptions(
 unless ($F or $E or today_is_payment_date()) {
     die "Today isn't a payment date and --force, --followup or --early not specified.\n";
 }
-
-#my $title = ($F and not $N) ? 'past-dues' : 'invoices';
-#print "$title\n";
-#
-#my $spreadsheet = $service->spreadsheet({title => $title});
-#my $invoice_sheet = $spreadsheet->worksheet({title => 'Mail Merge'});
 
 sub paypal_amount {
     my $cash = $_[0];
@@ -175,44 +163,10 @@ my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachment
 my @inv_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
 my @out_fields = (@email_fields, 'invid',  @inv_fields);
 
-#my @cells = $invoice_sheet->cells({ 'max-row' => 1, 'return-end' => 1 });
-#
-#my @headers = map { $_->content() } @cells;
-#
-#my $headers_match = 1;
-#
-#if (@headers == 0 or @headers != @out_fields) {
-#    $headers_match = 0;
-#} else {
-#    $headers_match = 1;
-#    foreach my $i (0..$#headers) {
-#        if ($headers[$i] ne $out_fields[$i]) {
-#            $headers_match = 0;
-#            last;
-#        }
-#    }
-#}
-#
-## Die if the headers don't match, but not if the sheet's blank
-#die "Output fields do not match! Delete data and run again.\n" unless $headers_match or @headers == 0;
-#
-#unless (@headers) {
-#    my $x = 1;
-#    my $y = 1;
-#    my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
-#    $invoice_sheet->batchupdate_cell( @title_row );
-#
-#    warn "This looks like a new spreadsheet.  Make sure 'balance', 'tuition', and 'paypal' columns are formatted as 'Financial'";
-#}
 
 $csv->say($out, \@out_fields);
 
 my %emails_seen = ();
-
-# $y needs to start out as the index of the fist blank row, so we add one
-# Perl arrays are zero-indexed, Google sheet rows are one-indexed, so we add another one
-#my @existing_rows = $invoice_sheet->rows();
-#my $y = @existing_rows + 1 + 1;
 
 sub invoice_to_google {
     my $act = $_[0];
@@ -285,15 +239,6 @@ sub invoice_to_google {
             push @row, $act->{$f};
         }
 
-        ## I would use ->add_row(\%), but for some damned reason it can't handle
-        ## spaces in the "Column Names", the keys of the hash.
-        ## Spaces must be present in the @email_fields to keep the Google Sheet Mail Merge
-        ## application happy.
-        #my $x = 1;
-        #my @sheet_row = map { { row => $y, col => $x++, input_value => ce($_) } } @row;
-        #$invoice_sheet->batchupdate_cell( @sheet_row );
-
-        #$y++;
         $csv->say($out, \@row);
     }
 }

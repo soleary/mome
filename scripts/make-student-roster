@@ -5,26 +5,27 @@ use strict;
 
 use Modern::Perl '2018';
 use DBI;
+use Excel::Writer::XLSX;
+use POSIX 'strftime';
 
-use lib 'lib';
-
-use MOME;
-
+my $SOURCE = 'responses.csv';
+my $OUTFILE = '2019-2020 Student Roster.xlsx';
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-my $service = MOME::google_sheets();
+my $wb = Excel::Writer::XLSX->new($OUTFILE);
+my $norm = $wb->add_format( font => 'Arial', size => 10 );
+my $bold = $wb->add_format( font => 'Arial', size => 10, bold => 1 );
+my $url = $wb->get_default_url_format();
+my $ws = $wb->add_worksheet();
 
-my $spreadsheet = $service->spreadsheet({title => 'upload'});
-my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
+my $x = 0; my $y = 0;
 
-my @out_fields = ('Last Name', 'First Name', 'Grade', 'Parents', 'Contact');
-
-my $x = 1;
-my $y = 1;
-my @title_row = map { { row => $y, col => $x++, input_value => $_ } } @out_fields;
-$out_sheet->batchupdate_cell( @title_row );
-$y++;
+$ws->write($x, $y, '2019-2020 Student Roster', $bold);
+$y = 3;
+$ws->write($x, $y, strftime('Updated at %I:%M%P on %A, %B %e, %Y', localtime()), $norm);
+$x = 2; $y = 0;
+$ws->write($x, $y, [ 'First Name', 'Last Name', 'Grade', 'Homeroom', 'Parents', 'Contact' ], $bold);
 
 my $email_sth = $dbh->prepare_cached(
     qq{select p.firstname, p.lastname, p.email
@@ -40,7 +41,6 @@ my $student_sth = $dbh->prepare(qq{select distinct(momefid), lastname, firstname
 $student_sth->execute();
 
 while (my $student = $student_sth->fetch()) {
-    my $x = 1;
     my @student = $student->@*;
     my $momefid = shift @student;
 
@@ -48,11 +48,10 @@ while (my $student = $student_sth->fetch()) {
     $student[@student] = join ', ', @emails;
     $student[@student] = make_mailto(@emails);
 
-    my @row = map { {row => $y, col => $x++, input_value => ce($_)} } @student;
-    $out_sheet->batchupdate_cell( @row );
-
-    say $y;
-    $y++;
+    $x++;
+    $y = $#student;
+    $ws->write($x, $y, pop @student, $url);
+    $ws->write($x, 0,  \@student,    $norm);
 }
 
 sub ce {

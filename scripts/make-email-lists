@@ -5,25 +5,21 @@ use strict;
 
 use Modern::Perl '2018';
 use DBI;
-use Text::CSV;
-
-use lib 'lib';
-
-use MOME;
+use Excel::Writer::XLSX;
+use POSIX 'strftime';
 
 my @DOW = qw/ Sunday Monday Tuesday Wednesday Thursday Friday Saturday /;
 my @GRADE = qw/ Zero First Second Third Fourth Fifth Sixth Seventh Eighth Ninth Tenth Eleventh Twelfth /;
 
+my $OUTFILE = '2019-2020 Parent Email Lists.xlsx';
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-my $service = MOME::google_sheets();
-
-open my $out, '>', 'groups.csv' or die "Can't open output: $!\n";
-my $csv = Text::CSV->new();
-
-my $spreadsheet = $service->spreadsheet({title => 'upload'});
-my $out_sheet = $spreadsheet->worksheet({title => 'Sheet1'});
+my $wb = Excel::Writer::XLSX->new($OUTFILE);
+my $norm = $wb->add_format( font => 'Arial', size => 10 );
+my $bold = $wb->add_format( font => 'Arial', size => 10, bold => 1 );
+my $url = $wb->get_default_url_format();
+my $ws = $wb->add_worksheet();
 
 # enum       => query to get the list of things to group by. First elements are the group names,
 #               second elements are bound to result query to produce list of desired email addresses.
@@ -100,11 +96,9 @@ my %sths = (
 
 my @rows = ();
 
-push @rows, [ 'Parent Email Groups' ];
-push @rows, [ ];
+push @rows, [ 'Parent Email Groups', '', strftime('Updated at %I:%M%P on %A, %B %e, %Y', localtime()) ], [ ];
 
 foreach my $type (sort keys %sths) {
-    print "$type\n";
     my $enum_sth = $dbh->prepare($sths{$type}{enum});
     $enum_sth->execute();
 
@@ -144,16 +138,22 @@ foreach my $type (sort keys %sths) {
     push @rows, [ ];
 }
 
-#my $y = 1;
+my $x = 0;
 foreach my $row (@rows) {
-    $csv->say($out, $row);
-    #my $x = 1;
-
-    #my @row = map { {row => $y, col => $x++, input_value => ce($_)} } $row->@*;
-    #$out_sheet->batchupdate_cell( @row );
-
-    #say $y;
-    #$y++;
+    my $y = 0;
+    foreach my $cell ($row->@*) {
+        my $fm = undef;
+        if (($x == 0 and $y == 0) or $cell =~ /^By/) {
+           $fm = $bold;
+        } elsif ($cell =~ /^=HYPERLINK/) {
+            $fm = $url;
+        } else {
+           $fm = $norm;
+        }
+        $ws->write($x, $y, $cell, $fm);
+        $y++;
+    }
+    $x++;
 }
 
 sub ce {

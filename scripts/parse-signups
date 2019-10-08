@@ -1,34 +1,17 @@
 #!/usr/bin/env perl
 
-use warnings;
-use strict;
-
 use Modern::Perl qw/2018/;
 use DBI;
+use Text::CSV;
 use Data::Dumper;
-
-use lib qw/lib/;
-
-use MOME;
 
 my $SAFE = 1;
 my $DBFILE = 'sjsmusic.db';
-
-my $service = MOME::google_sheets();
+my $INFILE = 'responses.csv';
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
-# Propmt to change the active session
-
-my $spreadsheet = $service->spreadsheet(
-    {title => 'Instrumental Music Student Registration 2018-2019 (Responses)'}
-);
-
-my $worksheet = $spreadsheet->worksheet({title => 'Form Responses 1'});
-
 my $fam_sth = $dbh->prepare( qq { insert into family_member (momefid, personid) values (?,?); });
-
-my @rows = $worksheet->rows;
 
 sub delete_momefid {
     my $momefid = $_[0];

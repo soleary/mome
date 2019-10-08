@@ -1,11 +1,10 @@
 requires 'perl'                      => '5.30.0';
-requires 'Net::Google::DataAPI'      => '>= 0.2805';
-requires 'Net::Google::Spreadsheets' => '>= 0.1501';
+requires 'DateTime'                  => '>= 1.50';
+requires 'Excel::Writer::XLSX'       => '>= 1.00';
+requires 'JSON::MaybeXS'             => '>= 1.004000';
 requires 'Math::Currency'            => '>= 0.52';
+requires 'Perl6::Slurp'              => '>= 0.051005';
 requires 'Storable'                  => '>= 3.08';
 requires 'Term::Prompt'              => '>= 1.04';
-requires 'JSON::MaybeXS'             => '>= 1.004000';
-requires 'DateTime'                  => '>= 1.50';
-requires 'Perl6::Slurp'              => '>= 0.051005';
 requires 'Text::CSV'                 => '>= 1.99';
 requires 'URI::Encode'               => '>= 1.1.1';
