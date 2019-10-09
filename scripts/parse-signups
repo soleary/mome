@@ -98,12 +98,12 @@ sub write_family {
 
 sub write_student {
     my $x = 0;
-    my @fields = qw/ momefid first last grade /;
+    my @fields = qw/ momefid first last grade homeroom /;
     my %rec = map { $_ => $_[$x++] } @fields;
-    my @in_fields = qw/ first last grade /;
+    my @in_fields = qw/ first last grade homeroom /;
 
     my $in_sth = $dbh->prepare_cached(
-        qq{ insert into person ( type, firstname, lastname, grade ) values (?,?,?,?); }
+        qq{ insert into person ( type, firstname, lastname, grade, homeroom ) values (?,?,?,?,?); }
     );
 
     $in_sth->execute( 'student', map{ce($_)} @rec{@in_fields} );
@@ -182,7 +182,7 @@ my %f = reverse %{$rows[0]->content};
 pop @rows;
 
 my @parent_fields = qw/ first last email phone /;
-my @student_fields = qw/ first last grade /;
+my @student_fields = qw/ first last grade hr /;
 my @instrument_fields = qw/ ins years /;
 my @fixed_fields = qw/ momefid tuition permission plan /;
 
