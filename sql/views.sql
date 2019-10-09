@@ -95,6 +95,29 @@ create view paid_up as
     where owed >= 0
     order by name;
 
+drop view if exists active_session;
+create view active_session as
+    select * from session where active is not null;
+
+drop view if exists active_family;
+create view active_family as
+    select * from family
+    where session = (select id from active_session);
+
+drop view if exists active_family_member;
+create view active_family_member as
+    select * from family_member
+    where momefid in (select momefid from active_family);
+
+drop view if exists active_person;
+create view active_person as
+    select f.momefid, p.id, p.type, p.firstname, p.lastname, p.phone, p.email
+    from person as p, family as f, family_member as fm
+    where p.id = fm.personid
+        and fm.momefid = f.momefid
+        and f.session = (select id from active_session)
+    order by p.lastname, p.id;
+
 drop view if exists total;
 create view total as
       select 01 as Num, 'Tuition         ' as Item, printf("%.2f", sum(tuition)) as 'Total' from family
