@@ -4,6 +4,13 @@ create view payment as
     where (type != 'debit' or type != 'credit' or type != 'refund')
         and validated is not null;
 
+drop view if exists total_payment;
+create view total_payment as
+    select f.*, coalesce(sum(p.amount), 0) as total_payment
+        from family as f left outer join payment as p on (f.momefid = p.momefid)
+        where f.session = (select id from active_session)
+        group by f.momefid;
+
 drop view if exists debit;
 create view debit as
     select * from ledger
