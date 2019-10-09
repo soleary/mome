@@ -9,6 +9,6 @@ if [ "$NAME" = "-h" ]
         EXEC="html-statement"
 fi
 
-MOMEFID=`sqlite3 sjsmusic.db "select distinct(momefid), name from family where momefid in (select momefid from family_member where personid in (select id from person where lastname like '%${NAME}%' or firstname like '%${NAME}%'));" | menupick -1`
+MOMEFID=`./query -noheader -list "select distinct(momefid), name from active_family where momefid in (select momefid from active_person where lastname like '%${NAME}%' or firstname like '%${NAME}%');" | menupick -1`
 
 ./$EXEC `echo ${MOMEFID} | f 0 "\|"`
