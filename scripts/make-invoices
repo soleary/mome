@@ -10,7 +10,7 @@ my $TESTING;
 my $DEBUG;
 # Number of days after payment date that a payment is due.
 my $PAYMENT_INTERVAL = 5;
-# Balance amount under wich we don't send an invoice - they are still recorded in DB
+# Balance amount in dollars under wich we don't send an invoice - they are still recorded in DB
 my $INVOICE_THRESHOLD = 5;
 my $PAYPAL_BASE = 'https://www.paypal.me/mrsolearymusic/';
 my $DBFILE = 'sjsmusic.db';
@@ -184,7 +184,7 @@ sub invoice_to_google {
     if ($act->{nobill} eq 'I' or # I means't don't invoice
         $act->{nobill} eq 'B' or # B means both. Don't rate or invoice
         $act->{balance} < $INVOICE_THRESHOLD or  # Don't send if balance is under threshold
-        ($F and $act->{nobill} eq 'F')) {  # If we are in follow-up mode, F means don't send follow-up
+        ($F and $act->{nobill} eq 'F')) {  # If we are in follow-up mode, F billing status means don't send follow-up
         $act->{donotsend} = 1;
     }
 
