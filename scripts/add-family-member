@@ -9,7 +9,6 @@ use autodie;
 use DBI;
 use Term::ReadKey;
 use DateTime;
-use Data::Dumper;
 
 $|++;
 
@@ -19,7 +18,7 @@ my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $search_sth = $dbh->prepare(
-    qq{ select email, firstname, lastname, id from person where
+    qq{ select email, firstname, lastname, id from parent_roster where
             firstname like ? or lastname like ? or email like ?; }
 );
 
