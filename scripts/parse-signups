@@ -89,11 +89,11 @@ sub write_family {
     ($rec{plan}) = $rec{plan} =~ /^(\d)/;
 
     my $family_sth = $dbh->prepare_cached(
-        qq{ insert into family ( momefid, name, tuition, plan, permission, session ) values (?, ?, ?, ?, ?,
-            (select id from session where active is not null)); }
+        qq{ insert into family ( momefid, name, tuition, plan, permission, session, nobill ) values (?, ?, ?, ?, ?,
+            (select id from session where active is not null), ''); }
     );
 
-    $family_sth->execute( map{ce($_)}@rec{@in_fields});
+    $family_sth->execute(map{ce($_)}@rec{@in_fields});
 }
 
 sub write_student {
