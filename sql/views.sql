@@ -2,7 +2,8 @@ drop view if exists payment;
 create view payment as
     select * from ledger
     where (type != 'debit' or type != 'credit' or type != 'refund')
-        and validated is not null;
+        and validated is not null
+        and momefid in (select momefid from active_family);
 
 drop view if exists total_payment;
 create view total_payment as
@@ -14,7 +15,8 @@ create view total_payment as
 drop view if exists debit;
 create view debit as
     select * from ledger
-    where type = 'debit';
+    where type = 'debit'
+        and momefid in (select momefid from active_family);
 
 drop view if exists clean_ledger;
 create view clean_ledger as
@@ -68,12 +70,14 @@ create view deposit_slip as
 
 drop view if exists student_roster;
 create view student_roster as
-    select f.momefid, cm.id as classid, p.id as personid, p.firstname, p.lastname, p.grade, cm.class, cm.instrument, cm.experience, cm.day, cm.inactive
-    from person as p, class_member as cm, family as f, family_member as fm
+    select f.momefid, cm.id as classid, p.id as personid, p.firstname, p.lastname, p.grade, p.homeroom, cm.class, cm.instrument, cm.experience, pr.o as day, cm.inactive
+    from person as p, class_member as cm, family as f, family_member as fm, prettify as pr
     where p.id = cm.personid
         and f.momefid = fm.momefid
+        and f.session = (select id from active_session)
         and fm.personid = p.id
         and cm.inactive is null
+        and (pr.type = 'dow' and pr.i = cm.day)
     order by p.lastname, p.firstname;
 
 drop view if exists parent_roster;
@@ -83,14 +87,16 @@ create view parent_roster as
     where p.id = fm.personid
         and fm.momefid = f.momefid
         and p.type = 'parent'
-        and (p.email is not null or p.phone is not null)
+        and f.session = (select id from active_session)
     order by p.lastname, p.id;
 
 drop view if exists paid_vs_tuition;
 create view paid_vs_tuition as
     select f.momefid, f.name, printf("%.2f", sum(p.amount)) as paid, f.tuition
     from family as f, payment as p
-    where f.momefid = p.momefid group by p.momefid;
+    where f.momefid = p.momefid
+        and f.session = (select id from active_session)
+    group by p.momefid;
 
 drop view if exists tuition_remaining;
 create view tuition_remaining as
