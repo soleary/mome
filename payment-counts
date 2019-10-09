@@ -1,3 +1,0 @@
-#!/bin/bash
-
-sqlite3 sjsmusic.db -column -header 'select f.momefid, f.name, f.plan, count(p.id) as payments from family as f left join payment as p on f.momefid = p.momefid where f.session = (select id from session where active is not null) group by f.momefid order by count(p.id) desc;'
