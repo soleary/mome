@@ -1,5 +1,8 @@
-local/
 backup/
 billing-client-auth.json
 billing-client-token
+*.csv
 family-statements/
+local/
+sjsmusic.db
+*.xlsx
