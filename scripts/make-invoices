@@ -43,7 +43,7 @@ sub paypal_amount {
     my $cash = $_[0];
 
     $cash += .30;
-    return sprintf "%.2f", $cash / ( 1 - .029 );
+    return sprintf '%.2f', $cash / ( 1 - .029 );
 }
 
 sub paypal_url {
@@ -137,11 +137,6 @@ sub format_day {
     return $num . $suffix;
 }
 
-sub payment_word {
-    return "payment" if $_[0] == 1;
-    return "payments";
-}
-
 sub record_to_db {
     my %i = @_;
 
@@ -157,7 +152,7 @@ sub record_to_db {
 }
 
 my @email_fields = ('First Name', 'Last Name', 'Email Address', 'File Attachments', 'Scheduled Date', 'Mail Merge Status');
-my @inv_fields = qw/ momefid balance plan tuition payment_word paypal paypal_url invoice_date payment_date /;
+my @inv_fields = qw/ momefid balance plan tuition paypal paypal_url invoice_date payment_date /;
 my @out_fields = (@email_fields, 'invid',  @inv_fields);
 
 
@@ -175,7 +170,6 @@ sub invoice_to_google {
     $act->{tuition} = sprintf '%.2f', $act->{tuition};
     $act->{paypal} = paypal_amount $act->{balance};
     $act->{paypal_url} = paypal_url $act->{paypal};
-    $act->{payment_word} = payment_word $act->{plan};
     $act->{attachment} = '\\input\\family-statements\\' . $act->{momefid} . '\\statement.html';
     ($act->{invoice_dt}, $act->{invoice_date}) = invoice_date();
     ($act->{payment_dt}, $act->{payment_date}) = payment_date();
