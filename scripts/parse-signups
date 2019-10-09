@@ -115,12 +115,19 @@ sub write_student {
 }
 
 sub write_instrument {
-
-    # Ukulele was put in siginup sheet without a class, so no
-    # hypen in the 3rd record, which messes up our parsing
-    # and hash creation later.
+    # Ukulele, violin, and chorus don't have classes on the signup form
+    # as these instruments aren't available in multiple classes.
+    # Add a "fake" class name so that things parse correctly.
     if ($_[2] !~ /-/) {
-        $_[2] = 'Ukulele Ministry - Ukulele';
+        if ($_[2] =~ /Ukulele/) {
+            $_[2] = 'Ukulele Ministry - Ukulele';
+        } elsif ($_[2] =~ /Violin/) {
+            $_[2] = 'Violin - Violin';
+        } elsif ($_[2] =~ /Chorus/) {
+            $_[2] = 'Chorus - Voice';
+        } else {
+            warn 'Weird class or instrument';
+        }
     }
 
     my @rec;
