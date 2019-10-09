@@ -30,7 +30,7 @@ sub delete_momefid {
 }
 
 sub clean_phone {
-    return undef unless $_[0];
+    return '' unless $_[0];
     $_ = $_[0];
 
     s/\D//g;
@@ -40,23 +40,36 @@ sub clean_phone {
     return "$1-$2-$3";
 }
 
-sub write_parent {
-    my $x = 0;
-    my @fields = qw/ momefid first last email phone /;
-    my %rec = map { $_ => $_[$x++] } @fields;
-    my @in_fields = qw/ first last email phone /;
+{
+    my %emails = ();
+    my %phones = ();
 
-    $rec{phone} = clean_phone($rec{phone});
-    $rec{email} = lc $rec{email};
+    sub write_parent {
+        my $x = 0;
+        my @fields = qw/ momefid first last email phone /;
+        my %rec = map { $_ => $_[$x++] } @fields;
+        my @in_fields = qw/ first last email phone /;
 
-    my $in_sth = $dbh->prepare_cached(
-        qq{ insert into person ( type, firstname, lastname, email, phone ) values (?,?,?,?,?); }
-    );
+        $rec{phone} = clean_phone($rec{phone});
+        $rec{email} = lc $rec{email};
 
-    $in_sth->execute( 'parent', map{ce($_)} @rec{@in_fields} );
-    my $id = $dbh->last_insert_id('','', 'person', 'id');
+        if ($emails{$rec{phone}}++) {
+            $rec{phone} = undef;
+        }
 
-    $fam_sth->execute($rec{momefid}, $id);
+        if ($emails{$rec{email}}++) {
+            $rec{email} = undef;
+        }
+
+        my $in_sth = $dbh->prepare_cached(
+            qq{ insert into person ( type, firstname, lastname, email, phone ) values (?,?,?,?,?); }
+        );
+
+        $in_sth->execute( 'parent', map{ce($_)} @rec{@in_fields} );
+        my $id = $dbh->last_insert_id('','', 'person', 'id');
+
+        $fam_sth->execute($rec{momefid}, $id);
+    }
 }
 
 sub write_family {
