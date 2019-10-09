@@ -32,7 +32,7 @@ fi
 sqlite3 $DBFILE << EOS
 .mode column
 .headers on
-select momefid, name, substr('          ', 0, 10 - length(printf('%.2f', balance))) || printf('%.2f', balance) as balance from balance $WHERE momefid in (select momefid from family where session = (select id from session where active is not null)) $ORDER;
+select momefid, name, substr('          ', 0, 10 - length(printf('%.2f', balance))) || printf('%.2f', balance) as balance from balance $WHERE momefid in (select momefid from active_family) $ORDER;
 .print
-select count(*) as families, sum(balance) as total from balance $WHERE momefid in (select momefid from family where session = (select id from session where active is not null));
+select count(*) as families, sum(balance) as total from balance $WHERE momefid in (select momefid from active_family);
 EOS
