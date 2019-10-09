@@ -133,6 +133,30 @@ create view active_person as
 
 drop view if exists total;
 create view total as
+      select 01 as Num, 'Tuition         ' as Item, printf("%.2f", sum(tuition)) as 'Total' from family where momefid in (select momefid from active_family)
+union select 02, 'Owed', printf("%.2f", sum(owed)) from tuition_remaining
+union select 03, 'Paid', printf("%.2f", sum(amount)) as 'Total' from payment
+union select 04, 'Billed', printf("%.2f", sum(amount)) from debit
+union select 05, 'Balance', printf("%.2f", sum(amount)) from clean_ledger where momefid in (select momefid from active_family)
+union select 06, 'High', printf("%.2f", max(balance)) from balance where momefid in (select momefid from active_family)
+union select 07, 'Low', printf("%.2f", min(balance)) from balance where momefid in (select momefid from active_family)
+union select 08, 'Families', count(id) from family where session = (select id from active_session)
+union select 09, 'Parents', count(id) from person where type = 'parent' and id in (select personid from active_family_member)
+union select 10, 'Students', count(id) from person where type = 'student' and id in (select personid from active_family_member)
+union select 11, 'Payers', count(id) from person where type = 'payer' and id in (select personid from active_family_member)
+union select 12, 'Paid Up', count(*) from paid_up where momefid in (select momefid from active_family)
+union select 13, 'Zero Balance', count(*) from balance where balance = 0 and momefid in (select momefid from active_family)
+union select 14, 'Negative Balance', count(*) from balance where balance < 0 and momefid in (select momefid from active_family)
+union select 15, 'Positive Balance', count(*) from balance where balance > 0 and momefid in (select momefid from active_family)
+union select 16, 'Invoices', count(id) from invoice where session = (select id from active_session)
+union select 17, 'Notifications', count(id) from notification where sentdate is not null and momefid in (select momefid from active_family)
+union select 18, 'Payments', count(id) from ledger where type != 'adjustment' and type != 'debit' and momefid in (select momefid from active_family)
+union select 19, 'Debits', count(id) from ledger where type = 'debit' and momefid in (select momefid from active_family)
+union select 20, 'Transactions', count(id) from ledger where momefid in (select momefid from active_family)
+order by Num;
+
+drop view if exists grand_total;
+create view grand_total as
       select 01 as Num, 'Tuition         ' as Item, printf("%.2f", sum(tuition)) as 'Total' from family
 union select 02, 'Owed', printf("%.2f", sum(owed)) from tuition_remaining
 union select 03, 'Paid', printf("%.2f", sum(amount)) as 'Total' from payment
@@ -140,7 +164,7 @@ union select 04, 'Billed', printf("%.2f", sum(amount)) from debit
 union select 05, 'Balance', printf("%.2f", sum(amount)) from clean_ledger
 union select 06, 'High', printf("%.2f", max(balance)) from balance
 union select 07, 'Low', printf("%.2f", min(balance)) from balance
-union select 08, 'Families', count(id) from family where session = (select id from session where active is not null)
+union select 08, 'Families', count(id) from family where session = (select id from active_session)
 union select 09, 'Parents', count(id) from person where type = 'parent'
 union select 10, 'Students', count(id) from person where type = 'student'
 union select 11, 'Payers', count(id) from person where type = 'payer'
