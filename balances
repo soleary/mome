@@ -3,17 +3,35 @@
 DBFILE="sjsmusic.db"
 
 WHERE=""
-
 case "$1" in
-    '-n') WHERE='where balance < 0';;
-    '-p') WHERE='where balance > 0';;
-    '-z') WHERE='where balance = 0';;
+    '-n') WHERE='balance < 0';;
+    '-p') WHERE='balance > 0';;
+    '-z') WHERE='balance = 0';;
 esac
+
+if [ -z "$WHERE" ]
+then
+    WHERE="where";
+else
+    WHERE="where $WHERE and";
+fi
+
+ORDER="order by name"
+case "$2" in
+    '-i') ORDER='order by momefid';;
+    '-b') ORDER='order by balance';;
+    '-n') ORDER='order by name';;
+esac
+
+if [ "$3" = '-r' ]
+then
+    ORDER="$ORDER desc";
+fi
 
 sqlite3 $DBFILE << EOS
 .mode column
 .headers on
-select momefid, name, printf("%.2f", balance) as balance from balance $WHERE order by name;
+select momefid, name, substr('          ', 0, 10 - length(printf('%.2f', balance))) || printf('%.2f', balance) as balance from balance $WHERE momefid in (select momefid from family where session = (select id from session where active is not null)) $ORDER;
 .print
-select count(*) as families, sum(balance) as total from balance $WHERE;
+select count(*) as families, sum(balance) as total from balance $WHERE momefid in (select momefid from family where session = (select id from session where active is not null));
 EOS
