@@ -36,12 +36,13 @@ $RUN -header "select p.id as ID,
             p.grade as Grade,
             cm.class as Class,
             cm.instrument as Instrument,
-            pp.o as Day
+            pp.o as Day,
+            p.homeroom as Homeroom
         from person as p, class_member as cm, prettify as pp
         where p.id = cm.personid and
         p.id in (select personid from family_member where momefid = $ID)
         and (pp.type = 'dow' and pp.i = cm.day)
-        order by firstname;" | column -t -s "|"
+        order by firstname, class;" | column -t -s "|"
 echo
 echo "Payment History"
 $RUN $PRE << EOS
