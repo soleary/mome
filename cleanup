@@ -1,2 +1,6 @@
+#!/bin/bash
+
 rm -rf family-statements
-rm -f invoices.csv paid-up.csv payment.csv groups.csv
+rm -f invoices.csv paid-up.csv payment.csv
+rm -f "`readlink -f responses.csv`"
+rm -f *.xlsx
