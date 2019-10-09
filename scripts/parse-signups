@@ -140,32 +140,21 @@ sub write_instrument {
     my %rec = map { $_ => $rec[$x++] } @fields;
     my @in_fields = qw/ studentid class instrument experience day /;
 
-    my $grade = $rec{grade};
-    my $class = $rec{class};
-    my $instrument = $rec{instrument};
-
-    if ($class eq 'Ukulele') {
-        $instrument = 'Ukulele';
-        $class = 'Ukulele Ministry';
-    }
-
-    # XXX: Fixme - this totally didn't work
-    if ($class eq 'Band' and $grade > 5) {
-        $class = 'Advanced Band';
-    }
-
-    # XXX: Fixme - this needs to be numbers 0 = Sunday, 1 = Monday, ect... for
-    # the sort order coming out of the DB to work
-    if ($class eq 'Orchestra' or $instrument eq 'Ukulele') {
-        $rec{day} = 'Monday';
-    } elsif ($class eq 'Advanced Band') {
-        $rec{day} = 'Tuesday';
-    } elsif ($class eq 'Band' and $grade eq '4') {
-        $rec{day} = 'Wednesday';
-    } elsif ($class eq 'Band' and $grade eq '5') {
-        $rec{day} = 'Thursday';
-    } elsif ($class eq 'Jazz Band') {
-        $rec{day} = 'Tuesday';
+    if ($rec{class} eq 'Violin' or $rec{instrument} eq 'Ukulele') {
+        $rec{day} = '1';    # Monday
+    } elsif ($rec{class} eq 'Band' and $rec{grade} > 5) {
+        $rec{class} = 'Advanced Band';
+        $rec{day} = '2';    # Tuesday
+    } elsif ($rec{class} eq 'Band' and $rec{grade} eq '4') {
+        $rec{day} = '3';    # Wednsday
+        $rec{class} = '4th Grade Band';
+    } elsif ($rec{class} eq 'Band' and $rec{grade} eq '5') {
+        $rec{day} = '4';    # Thursday
+        $rec{class} = '5th Grade Band';
+    } elsif ($rec{class} eq 'Jazz Band') {
+        $rec{day} = '2';    # Tuesday
+    } elsif ($rec{class} eq 'Chorus') {
+        $rec{day} = 3;      # Wednsday
     } else {
         warn 'How did we get here, excatly?';
     }
