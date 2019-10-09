@@ -7,6 +7,7 @@ case "$1" in
     '-n') WHERE='balance < 0';;
     '-p') WHERE='balance > 0';;
     '-z') WHERE='balance = 0';;
+    '-e') WHERE='balance < -5';;
 esac
 
 if [ -z "$WHERE" ]
