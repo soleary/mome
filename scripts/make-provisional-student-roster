@@ -8,7 +8,6 @@ use strict;
 use lib qw/lib/;
 
 use MOME;
-use Data::Dumper;
 
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
