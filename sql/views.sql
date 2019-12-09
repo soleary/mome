@@ -131,6 +131,10 @@ create view active_person as
         and f.session = (select id from active_session)
     order by p.lastname, p.id;
 
+drop view if exists active_class_member;
+create view active_class_member as
+    select * from class_member where personid in (select id from active_person) and inactive is null;
+
 drop view if exists total;
 create view total as
       select 01 as Num, 'Tuition         ' as Item, printf("%.2f", sum(tuition)) as 'Total' from family where momefid in (select momefid from active_family)
