@@ -1,6 +1,5 @@
 #!/bin/bash
 
-DBFILE='sjsmusic.db'
 
 echo 'This will mark all undeposited payments as deposited.'
 echo 'Are you sure?'
@@ -8,5 +7,5 @@ echo 'Enter to continue, ctrl+c to quit.'
 
 read
 
-sqlite3 $DBFILE "update ledger set depositdate = date('now', 'localtime') where depositdate is null and type != 'debit';"
-sqlite3 $DBFILE "update additional_deposits set depositdate = date('now', 'localtime') where depositdate is null;"
+./query "update ledger set depositdate = date('now', 'localtime') where depositdate is null and $WHERE;"
+./query "update additional_deposits set depositdate = date('now', 'localtime') where depositdate is null and $WHERE;"

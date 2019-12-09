@@ -1,9 +1,5 @@
 #!/bin/bash
 
-DBFILE="sjsmusic.db"
-
-SQL=""
-
 case "$1" in
     '-n') SQL="select type as Type, count(id) as 'Unsent Notifications' from notification where sentdate is null and superseded is null and type = 'payment'
                union
@@ -11,8 +7,4 @@ case "$1" in
     '-i') SQL="select count(id) as 'Unsent Invoices' from invoice where sentdate is null and donotsend is null";;
 esac
 
-sqlite3 $DBFILE << EOS
-.mode column
-.headers on
-$SQL;
-EOS
+./query "$SQL"

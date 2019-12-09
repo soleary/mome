@@ -29,10 +29,7 @@ then
     ORDER="$ORDER desc";
 fi
 
-sqlite3 $DBFILE << EOS
-.mode column
-.headers on
-select momefid, name, substr('          ', 0, 10 - length(printf('%.2f', balance))) || printf('%.2f', balance) as balance from balance $WHERE momefid in (select momefid from active_family) $ORDER;
+./query << EOS
 .print
 select count(*) as families, printf('%.2f', sum(balance)) as total from balance $WHERE momefid in (select momefid from active_family);
 EOS
