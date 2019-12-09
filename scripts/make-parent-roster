@@ -1,8 +1,5 @@
 #!/usr/bin/env perl
 
-use warnings;
-use strict;
-
 use Modern::Perl '2018';
 use DBI;
 use Excel::Writer::XLSX;
