@@ -1,4 +1,4 @@
-requires 'perl'                      => '5.30.0';
+requires 'perl'                      => '5.30.1';
 requires 'DateTime'                  => '>= 1.50';
 requires 'Excel::Writer::XLSX'       => '>= 1.00';
 requires 'JSON::MaybeXS'             => '>= 1.004000';
