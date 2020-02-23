@@ -6,8 +6,6 @@ use URI::Encode 'uri_encode';
 
 use lib 'lib';
 
-use MOME;
-
 my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 

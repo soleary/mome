@@ -3,7 +3,6 @@
 use Modern::Perl '2018';
 use DBI;
 use DateTime;
-use Data::Dumper;
 use Text::CSV;
 
 my $csv = Text::CSV->new();
