@@ -91,7 +91,13 @@ foreach my $type (sort keys %sths) {
 
         my @emails = ();
         while (my $row = $result_sth->fetch()) {
-            push @emails, $row->[0] . ' ' . $row->[1] . ' <' . $row->[2] . '>';
+            # I ran into some issues with the year list being too long and exceeding some
+            # string limit in Google sheets.  So we'll just include email addresses without names.
+            if ($type eq 'year') {
+                push @emails, '<' . $row->[2] . '>';
+            } else {
+                push @emails, $row->[0] . ' ' . $row->[1] . ' <' . $row->[2] . '>';
+            }
         }
 
         my @row = ();
