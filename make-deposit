@@ -1,7 +1,25 @@
 #!/bin/bash
 
+WHERE=""
 
-echo 'This will mark all undeposited payments as deposited.'
+case "$1" in
+    "-a") WHERE="type != 'debit'"  ;;
+    "-c") WHERE="type =  'cash'"   ;;
+    "-e") WHERE="type =  'credit'" ;;
+    "-k") WHERE="type =  'check'"  ;;
+    "-p") WHERE="type =  'paypal'" ;;
+    "-r") WHERE="type =  'refund'" ;;
+    *)
+esac
+
+if [ -z "$WHERE" ]
+then
+    echo "No deposit type supplied.  Supply one of -a, -c, -k, -p -r -e";
+    echo "That's all, cash, check, paypal, refund, or credit."
+    exit 1;
+fi
+
+echo 'This will mark undeposited payments as deposited.'
 echo 'Are you sure?'
 echo 'Enter to continue, ctrl+c to quit.'
 
