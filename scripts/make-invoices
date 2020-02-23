@@ -192,8 +192,10 @@ sub invoice_to_google {
             use Data::Dumper;
             $Data::Dumper::Sortkeys = 1;
             my @keys = grep { $_ !~ /_dt$/ } keys $act->%*;
+            my @pfields = qw( firstname lastname email );
             my %rec;
             @rec{@keys} = @{$act}{@keys};
+            @rec{@pfields} = @{$parent}{@pfields};
             print Dumper \%rec;
             <>;
             next;
