@@ -225,6 +225,7 @@ sub invoice_to_google {
             push @row, undef;
         }
 
+        # Invoice number
         push @row, $invid;
 
         # Additional fields for invoice template
