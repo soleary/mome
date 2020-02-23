@@ -1,4 +1,4 @@
 #!/bin/bash
 
-find lib/ -name '*.pm' -exec carton run perl -c {} \;
-find scripts/ -type f -and -not -path "*/\.*" -and -not -name "carton-runner" -exec carton run perl -c {} \;
+for f in `find lib/ -name '*.pm' | sort`; do carton run perl -c $f; done;
+for f in `find scripts/ -type f -and -not -path "*/\.*" -and -not -name "carton-runner" | sort`; do carton run perl -c $f; done;
