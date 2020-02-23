@@ -1,4 +1,10 @@
 #!/bin/bash
 
+if [ "$1" = "-v" ]
+    then
+        ./query "select d.id, f.name, d.type, d.checknum, d.amount, d.notes from deposits as d left outer join family as f on (f.momefid = d.momefid)"
+    echo
+fi
+
 ./query "select * from deposit_slip";
 
