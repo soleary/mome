@@ -43,6 +43,23 @@ create view family_balance as
         and l.momefid = f.momefid
         group by l.momefid;
 
+drop view if exists paid_vs_tuition;
+create view paid_vs_tuition as
+    select f.momefid, f.name, printf("%.2f", sum(p.amount)) as paid, f.tuition
+    from billing_family as f, payment as p
+    where f.momefid = p.momefid
+    group by p.momefid;
+
+drop view if exists tuition_remaining;
+create view tuition_remaining as
+    select *, paid - tuition as owed from paid_vs_tuition;
+
+drop view if exists paid_up;
+create view paid_up as
+    select * from tuition_remaining
+    where owed >= 0
+    order by name;
+
 drop view if exists deposits;
 create view deposits as
         select id, type, momefid, checknum, amount
@@ -90,23 +107,6 @@ create view parent_roster as
         and f.session = (select id from active_session)
     order by p.lastname, p.id;
 
-drop view if exists paid_vs_tuition;
-create view paid_vs_tuition as
-    select f.momefid, f.name, printf("%.2f", sum(p.amount)) as paid, f.tuition
-    from family as f, payment as p
-    where f.momefid = p.momefid
-        and f.session = (select id from active_session)
-    group by p.momefid;
-
-drop view if exists tuition_remaining;
-create view tuition_remaining as
-    select *, paid - tuition as owed from paid_vs_tuition;
-
-drop view if exists paid_up;
-create view paid_up as
-    select * from tuition_remaining
-    where owed >= 0
-    order by name;
 
 drop view if exists active_session;
 create view active_session as
