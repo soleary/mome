@@ -8,15 +8,6 @@ When entering payments, do a secondary search if there no results.
 Check for students with the search terms and return them.
 
 --
-Next year, when parsing, add a class for Advanced Band to avoid
-having to put an in clause for the grades.  This will confine all
-the logic for what constitutes an Advanced Band to the parse-signups
-script.  As it stands, they are all just Band and then you have to walk
-back to person from class_member to get grade, then constrain grades just
-for Advanced Band.  I guess classes could have a grade, but that's either
-denormalizing or not really a property for an individual class.
-
---
 When a family's tuition changes, a debit must be added to make
 their previous debits equal to one of their future ones.  This could
 be automated.
