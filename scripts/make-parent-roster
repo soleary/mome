@@ -30,20 +30,17 @@ sub ce {
 }
 
 sub make_mailto {
-    my $p = $_[0];
+    my $addr = $_[0];
 
-    return '' unless $p->[3];
-    return '=HYPERLINK("mailto:'
-    . $p->[1] . ' ' . $p->[0] . ' ' . '<' . $p->[3] . '>'
-    . '", "' . $p->[3] . '")';
+    return '' unless $addr;
+    return '=HYPERLINK("mailto:' . $addr . '", "Send Email")';
 }
 
-sub make_phone_link {
-    my $p = $_[0];
-    return $p->[2];
+sub make_email_text {
+    my ($first, $last, $email) = @_;
 
-    return '' unless $p->[2];
-    return '="+'. $p->[2] . '"';
+    return '' unless $email;
+    return $first . ' ' . $last . ' <' . $email . '>';
 }
 
 sub make_email_text {
