@@ -110,7 +110,7 @@ create view deposit_slip as
     union
         select 'Total', count(*), printf("%.2f", sum(amount))
         from deposits
-        where type != 'paypal'
+        where type = 'cash' or type = 'check'
     union
         select 'Grand Total', count(*), printf("%.2f", sum(amount))
         from deposits
