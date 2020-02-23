@@ -26,3 +26,49 @@ info than DEBUG.
 --
 Fix upload-notifications to properly advise the user about
 notification types.
+
+--
+Add homeschool or other as homeroom option
+
+--
+Library for writing Excel sheets.
+
+Pass a worksheet obj and an array of arrays of element arrays,
+First element content, second format name with second element optional.
+Defaults to $norm format.
+
+Check to see if the arrays are all length 1, if so flatten into array
+reference and send to $ws->write()
+
+formats are 'url' and 'header'.  Headers are bold, URL's get the url
+format and apply that to URLs.
+
+--
+Clear out the sessions from any table other family.  Just don't need 'em.
+
+--
+Replace one-off query tools with calls to the query script
+
+--
+Have the query script get the binary and dbname from some
+configuration somewhere
+
+--
+Have scripts load defaults from some configuration somewhere
+
+--
+Devise a configuration mechanism that can work for Perl code and
+shell scripts
+
+--
+Replace all mention of deposits with deposit in schema
+
+--
+Fix statements so Payoffs are calculated correctly
+- no abs
+- subtract payments from tuition amount
+
+--
+Calculate total_payments and payment correctly
+Should count credits toward total_payments, but not toward things like
+calculating cash earned. (So, two views?)
