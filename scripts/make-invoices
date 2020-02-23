@@ -101,14 +101,14 @@ sub payment_date {
         $id = DateTime->now();
     }
 
-    if ($F) {
-        if ($I) {
-            $pd = $id->add(days => $I);
-        } else {
-            $pd = $id;
-        }
+    if ($I) {
+        $pd = $id->add(days => $I);
     } else {
-        $pd = $id->add(days => $PAYMENT_INTERVAL);
+        if ($F) {
+            $pd = $id;
+        } else {
+            $pd = $id->add(days => $PAYMENT_INTERVAL);
+        }
     }
 
     $pd->set_time_zone($tz);
