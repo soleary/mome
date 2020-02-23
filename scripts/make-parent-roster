@@ -43,8 +43,19 @@ sub make_email_text {
     return $first . ' ' . $last . ' <' . $email . '>';
 }
 
-sub make_email_text {
-    my $p = $_[0];
+my $parent_sth = $dbh->prepare(qq{
+    select firstname, lastname, phone, email
+    from parent_roster order by lastname, firstname;
+});
+$parent_sth->execute();
+
+while (my $parent = $parent_sth->fetch()) {
+    my @p = $parent->@*;
+
+    my $email = pop @p;
+
+    push @p, make_email_text($p[0], $p[1], $email);
+    push @p, make_mailto($p[-1]);
 
     $x++;
     $y = $#p;
