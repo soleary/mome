@@ -33,8 +33,9 @@ create view ed_student as
 
 drop view if exists payment;
 create view payment as
-    select * from ledger
-    where (type != 'debit' or type != 'credit' or type != 'refund')
+    select *
+    from ledger
+    where   type != 'debit'
         and validated is not null
         and momefid in (select momefid from billing_family);
 
