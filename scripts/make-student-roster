@@ -24,17 +24,11 @@ $ws->write($x, $y, strftime('Updated at %I:%M%P on %A, %B %e, %Y', localtime()),
 $x = 2; $y = 0;
 $ws->write($x, $y, [ 'First Name', 'Last Name', 'Grade', 'Homeroom', 'Parents', 'Contact' ], $bold);
 
-my $email_sth = $dbh->prepare_cached(
-    qq{select p.firstname, p.lastname, p.email
-        from person as p, family_member as fm
-        where
-            p.email is not null
-        and p.type = 'parent'
-        and fm.personid = p.id
-        and fm.momefid = ?;}
-);
+my $student_sth = $dbh->prepare(qq{
+    select distinct(personid), momefid, firstname, lastname, grade, homeroom
+    from student_roster order by lastname, grade, firstname;
+});
 
-my $student_sth = $dbh->prepare(qq{select distinct(momefid), lastname, firstname, grade from student_roster order by lastname, firstname;});
 $student_sth->execute();
 
 while (my $student = $student_sth->fetch()) {

@@ -9,6 +9,6 @@ if [ "$NAME" = "-h" ]
         EXEC="html-statement"
 fi
 
-MOMEFID=`./query -noheader -list "select distinct(momefid), name from active_family where momefid in (select momefid from active_person where lastname like '%${NAME}%' or firstname like '%${NAME}%');" | menupick -1`
+MOMEFID=`./query -noheader -list "select distinct(momefid), name from billing_family where momefid in (select momefid from billing_person where lastname like '%${NAME}%' or firstname like '%${NAME}%');" | menupick -1`
 
 ./$EXEC `echo ${MOMEFID} | f 0 "\|"`

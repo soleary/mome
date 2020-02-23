@@ -30,8 +30,9 @@ then
 fi
 
 ./query << EOS
+select momefid, name, substr('          ', 0, 10 - length(printf('%.2f', balance))) || printf('%.2f', balance) as balance from balance $WHERE momefid in (select momefid from billing_family) $ORDER;
 .print
-select count(*) as families, printf('%.2f', sum(balance)) as total from balance $WHERE momefid in (select momefid from active_family);
+select count(*) as families, printf('%.2f', sum(balance)) as total from balance $WHERE momefid in (select momefid from billing_family);
 EOS
 
 if [ "$1" = '-e' ]

@@ -17,9 +17,10 @@ my $DBFILE = 'sjsmusic.db';
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $search_sth = $dbh->prepare(
-    qq{ select email, firstname, lastname, id from person where
-            (firstname like ? or lastname like ? or email like ?) and type != 'student'; }
-);
+    qq{ select email, firstname, lastname, personid from billing_person where
+            firstname like ? or lastname like ? or email like ?;
+});
+
 my $payment_sth = $dbh->prepare(
     qq{ insert into ledger (momefid, amount, type, date, testing)
             values (?,?,?,date('now', 'localtime'),?); }

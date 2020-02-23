@@ -276,7 +276,7 @@ sub get_balance {
 }
 
 my @ids_arr = $dbh->selectall_array(
-    qq{ select momefid from family where session = (select id from session where active is not null); }
+    qq{ select momefid from billing_family; }
 );
 
 my @ids = map { $_->[0] } @ids_arr;

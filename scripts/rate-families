@@ -124,7 +124,7 @@ my @todays_plans = $dbh->selectall_array(qq{ select schedule from payment_schedu
 my $plan_string = join ', ', map { $dbh->quote($_->[0]) } @todays_plans;
 
 my @ids = $dbh->selectall_array(
-    qq{ select momefid, plan from family where plan in ($plan_string) and session = (select id from session where active is not null); }
+    qq{ select momefid, plan from billing_family where plan in ($plan_string); }
 );
 
 foreach my $id (@ids) {
