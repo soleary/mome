@@ -86,6 +86,7 @@ $RUN $PRE "select
         where p.id = cm.personid and
         p.id in (select personid from family_member where momefid = $ID)
         and (pp.i = cm.day and pp.type = 'dow')
+        and cm.inactive is null
         order by firstname, class;"
 echo "</TABLE>
 <TABLE class="payment">"
