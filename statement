@@ -32,6 +32,7 @@ $RUN -header "select id as ID,
 echo
 echo "Students"
 $RUN -header "select p.id as ID,
+            cm.inactive as I,
             p.firstname || ' ' || p.lastname as Name,
             p.grade as Grade,
             cm.class as Class,
