@@ -4,7 +4,7 @@ use Modern::Perl '2018';
 
 use DBI;
 
-# Set to either undef or truthy as to not pollute db with ''s
+# Set to either undef or truthy as to not pollute db with empty strings
 my $TESTING;
 my $DBFILE = 'sjsmusic.db';
 
