@@ -13,7 +13,6 @@ $|++;
 my $TESTING;
 
 my $DBFILE = 'sjsmusic.db';
-
 my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
 
 my $search_sth = $dbh->prepare(
@@ -23,13 +22,13 @@ my $search_sth = $dbh->prepare(
 
 my $payment_sth = $dbh->prepare(
     qq{ insert into ledger (momefid, amount, type, date, testing)
-            values (?,?,?,date('now', 'localtime'),?); }
-);
+            values (?,?,?,date('now', 'localtime'),?);
+});
 
 my $ad_sth = $dbh->prepare(
     qq{ insert into additional_deposits (amount, type, date, testing)
-            values (?,?,date('now', 'localtime'),?); }
-);
+            values (?,?,date('now', 'localtime'),?);
+});
 
 my $ledger_check_sth = $dbh->prepare(qq{ update ledger set checknum = ? where id = ?; });
 my $ledger_note_sth  = $dbh->prepare(qq{ update ledger set notes = ? where id = ?; });
