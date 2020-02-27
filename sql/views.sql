@@ -93,11 +93,11 @@ create view paid_up as
 
 drop view if exists deposits;
 create view deposits as
-        select id, type, momefid, checknum, amount, notes
+        select id, date, type, momefid, checknum, amount, notes
         from clean_ledger
         where depositdate is null and type != 'debit'
     union
-        select id, type, '0', checknum, amount, notes
+        select id, date, type, '0', checknum, amount, notes
         from additional_deposits
         where depositdate is null
     order by id;
