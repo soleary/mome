@@ -15,4 +15,4 @@ sub paypal_url {
     return "$PAYPAL_BASE$amount";
 }
 
-print paypal_url(paypal_amount($ARGV[0])), "\n";
+print paypal_url(paypal_amount($ARGV[0] =~ /(\d+)/)), "\n";
