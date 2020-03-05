@@ -60,7 +60,7 @@ foreach my $sth ($payments, $extra) {
             next;
         }
 
-        if ($payment->[0] == 0 or $payment->[2] eq 'credit') {
+        if ($payment->[0] == 0) {
             next;
         } else {
             make_notification($payment);
@@ -71,6 +71,7 @@ foreach my $sth ($payments, $extra) {
 
 sub make_notification {
     my $momefid = $_[0]->[0];
+    my $payment_type = $_[0]->[2];
 
     $void_notification->execute($momefid);
 
@@ -79,8 +80,11 @@ sub make_notification {
     my $type;
     if ($paid_up->fetch()) {
         $type = 'paid-up';
-    } else {
+    } elsif ($payment_type ne 'credit') {
         $type = 'payment';
+    } else {
+        # do nothing for credits that don't pay off the account
+        return;
     }
 
     $add_notification->execute($momefid, $type, $TESTING);
