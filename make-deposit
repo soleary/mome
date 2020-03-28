@@ -25,5 +25,5 @@ echo 'Enter to continue, ctrl+c to quit.'
 
 read
 
-./query "update ledger set depositdate = date('now', 'localtime') where depositdate is null and $WHERE;"
-./query "update additional_deposits set depositdate = date('now', 'localtime') where depositdate is null and $WHERE;"
+./query "update ledger set depositdate = date('now', 'localtime') where validated is not null and depositdate is null and $WHERE;"
+./query "update additional_deposits set depositdate = date('now', 'localtime') where validated is not null and depositdate is null and $WHERE;"
