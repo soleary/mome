@@ -28,7 +28,7 @@ drop view if exists ed_student;
 create view ed_student as
     select *
     from class_member
-    where   personid in (select id from billing_person)
+    where   personid in (select personid from billing_person)
         and inactive is null;
 
 drop view if exists payment;
