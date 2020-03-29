@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+use Modern::Perl '2018';
+use DBI;
+use Excel::Writer::XLSX;
+use POSIX 'strftime';
+
+my $OUTFILE = '2019-2020 Class Lists.xlsx';
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $wb = Excel::Writer::XLSX->new($OUTFILE);
+my $norm = $wb->add_format( font => 'Arial', size => 10 );
+my $bold = $wb->add_format( font => 'Arial', size => 10, bold => 1 );
+my $ws = $wb->add_worksheet();
+
+my $x = 0; my $y = 0;
+
+$ws->write($x, $y, '2019-2020 Class Lists', $bold);
+$y = 3;
+$ws->write($x, $y, strftime('Updated at %I:%M%P on %A, %B %e, %Y', localtime()), $norm);
+$x = 1; $y = 0;
+
+my @headers = ('First Name', 'Last Name', 'Instrument', 'Grade', 'Homeroom');
+my $classes_sth = $dbh->prepare('select distinct(class) from student_roster order by class;');
+$classes_sth->execute();
+
+my $students_sth = $dbh->prepare_cached(q{
+    select firstname, lastname, instrument, grade, homeroom
+    from student_roster
+    where class = ?
+    order by class, instrument, grade, lastname;
+});
+
+foreach my $class ($classes_sth->fetchall_arrayref()->@*) {
+    $x++;
+    $ws->write($x, $y, $class->[0], $bold);
+    $x++;
+    $ws->write($x, $y, \@headers, $bold);
+
+    $students_sth->execute($class->[0]);
+    while (my $row = $students_sth->fetchrow_arrayref()) {
+        $x++;
+        $ws->write($x, $y, $row, $norm);
+    }
+    $x++;
+    $students_sth->finish();
+}
