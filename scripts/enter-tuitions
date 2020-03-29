@@ -1,0 +1,38 @@
+#!/usr/bin/env perl
+
+use Modern::Perl '2018';
+use DBI;
+
+my $DBFILE = 'sjsmusic.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$DBFILE",'','', { RaiseError => 1 });
+
+my $tuition_sth = $dbh->prepare('update family set tuition = ? where momefid = ?;');
+
+while (1) {
+    print "MOMEFID:";
+    my $momefid = <>;
+    chomp $momefid;
+
+    last if $momefid == 0;
+
+    print "\n";
+    print qx{ ./statement $momefid };
+
+    print "Tuition:";
+    my $tuition = <>;
+    chomp $tuition;
+
+    next if $tuition == 0;
+
+    print "Set tuition for $momefid to $tuition? :[Y/N]";
+    my $answer = <>;
+    chomp $answer;
+
+    if ($answer =~ /^y/i) {
+        $tuition_sth->execute($tuition, $momefid);
+    } else {
+        next;
+    }
+
+    print qx{ ./statement $momefid };
+}
