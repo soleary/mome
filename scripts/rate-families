@@ -84,7 +84,7 @@ sub payment_number {
     return @{$dbh->selectrow_arrayref(qq{ select number from payment_schedule where date = $today and schedule = $plan; })}[0];
 }
 
-# Nobill is 'R' for norate, 'I' for no invoice, 'B' for both
+# Nobill field is 'R' for norate, 'I' for no invoice, 'B' for both
 sub dont_charge {
     my $act = $_[0];
 
