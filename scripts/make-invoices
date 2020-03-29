@@ -87,24 +87,25 @@ sub payment_date {
     my $id; # Invoice Date
     my $pd; # Payment Date
 
+    # Set the invoice date.
+    # If we are running early, get the next billing date, otherwise, it's today
     if ($E) {
-        if ($I) {
-            $pd = $id->add(days => $I);
-        } else {
-            my ($next_billing_date) = $dbh->selectall_array(
-                qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
-            );
-            my ($y, $m, $d) = split '-', $next_billing_date->[0];
-            $id = DateTime->new(year => $y, month => $m, day => $d);
-        }
+        my ($next_billing_date) = $dbh->selectall_array(
+            qq{ select date from payment_schedule where date > date('now', 'localtime') order by date limit 1; }
+        );
+        my ($y, $m, $d) = split '-', $next_billing_date->[0];
+        $id = DateTime->new(year => $y, month => $m, day => $d);
     } else {
         $id = DateTime->now();
     }
 
+    # Set the payment date.
+    # If an interval is supplied, use it.
+    # If we're forcing or following up and don't want normal billing intervals, use today.
     if ($I) {
         $pd = $id->add(days => $I);
     } else {
-        if ($F) {
+        if ($F and not $N) {
             $pd = $id;
         } else {
             $pd = $id->add(days => $PAYMENT_INTERVAL);
