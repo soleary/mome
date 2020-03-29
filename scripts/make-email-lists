@@ -70,6 +70,17 @@ my %sths = (
         # The "and" with the bind value on the where clause was added in order to satisfy the
         # requirement that there be one bind value in the query.  It'll always return true.
     },
+    'lesson Group' => {
+        enum       => qq{ select query, name from lesson_groups order by id; },
+        enum_type  => 'macro',
+        result     => qq{
+        select p.firstname, p.lastname, p.email
+            from parent_roster as p
+            where
+                p.email is not null
+            and p.momefid in ( select momefid from student_roster where %%QUERY%% )
+            order by p.lastname;},
+    },
 );
 
 my @rows = ();
@@ -82,12 +93,20 @@ foreach my $type (sort keys %sths) {
 
     my @labels = ( 'By ' . ucfirst $type, 'To', 'Cc', 'Bcc' );
 
-    my $result_sth = $dbh->prepare_cached($sths{$type}{result});
+    my $result_sth;
+    unless ($sths{$type}{enum_type} eq 'macro') {
+        $result_sth = $dbh->prepare_cached($sths{$type}{result});
+    }
 
     push @rows, [ $labels[0] ];
 
     while (my $item = $enum_sth->fetch()) {
-        $result_sth->execute($item->[0]);
+        if ($sths{$type}{enum_type} eq 'macro') {
+            $result_sth = process_macro($item, $sths{$type}{result});
+            $result_sth->execute();
+        } else {
+            $result_sth->execute($item->[0]);
+        }
 
         my @emails = ();
         while (my $row = $result_sth->fetch()) {
@@ -151,4 +170,14 @@ sub hyperlink_emails {
 
     my $link = qq{=HYPERLINK("mailto:?$type=} . join ', ', @emails;
     return $link . qq{", "Email as } . ucfirst $type . qq{")};
+}
+
+sub process_macro {
+
+    my $where = $_[0][0];
+    my $statement = $_[1];
+
+    $statement =~ s/%%QUERY%%/$where/;
+    #print $statement;
+    return $dbh->prepare($statement);
 }
