@@ -33,11 +33,11 @@ $student_sth->execute();
 
 while (my $student = $student_sth->fetch()) {
     my @student = $student->@*;
+    shift @student;     # Don't need the student's ID anymore
     my $momefid = shift @student;
 
-    my @emails = parent_emails($momefid);
-    $student[@student] = join ', ', @emails;
-    $student[@student] = make_mailto(@emails);
+    $student[@student] = join ', ', parent_names($momefid);
+    $student[@student] = make_mailto(parent_emails($momefid));
 
     $x++;
     $y = $#student;
@@ -50,8 +50,41 @@ sub ce {
     return $_[0];
 }
 
+sub parent_names {
+    my $momefid = $_[0];
+
+    my $name_sth = $dbh->prepare_cached(
+        qq{select p.firstname, p.lastname
+            from person as p, family_member as fm
+            where
+                p.type = 'parent'
+            and fm.personid = p.id
+            and fm.momefid = ?;}
+    );
+
+    $name_sth->execute($momefid);
+
+    my @names = ();
+    while (my $rec = $name_sth->fetch()) {
+        push @names, $rec->[0] . ' ' . $rec->[1];
+    }
+    $name_sth->finish();
+
+    return @names;
+}
+
 sub parent_emails {
     my $momefid = $_[0];
+
+    my $email_sth = $dbh->prepare_cached(
+        qq{select p.firstname, p.lastname, p.email
+            from person as p, family_member as fm
+            where
+                p.email is not null
+            and p.type = 'parent'
+            and fm.personid = p.id
+            and fm.momefid = ?;}
+    );
 
     $email_sth->execute($momefid);
 
