@@ -106,18 +106,13 @@ foreach my $s (keys %sheets) {
 
 my %emails_seen = ();
 
-sub notification_to_google {
+sub notification_to_sheet {
     my $n = shift; # Notification hash
     my $s = shift; # Sheet hash
 
     $n->{date} = format_date $n->{date};
 
     my $sent = $s->{$n->{type}}->{sent};
-
-    #XXX: debug
-    use Data::Dumper;
-    print Dumper $sent;
-    print Dumper $s->{$n->{type}};
 
     unless ($sent) {
         printf "There are %s notifications to send.\n", $n->{type};
@@ -159,7 +154,7 @@ my @ids = $dbh->selectall_array(
 
 foreach my $id (@ids) {
     my $n = get_notification($id->[0]);
-    notification_to_google($n, $sheets{$n->{type}});
+    notification_to_sheet($n, $sheets{$n->{type}});
 }
 
 system './send-notifications';
