@@ -18,8 +18,9 @@ my $bold = $wb->add_format( font => 'Arial', size => 10, bold => 1 );
 my $url = $wb->get_default_url_format();
 my $ws = $wb->add_worksheet();
 
-# enum       => query to get the list of things to group by. First elements are the group names,
-#               last elements are bound to result query to produce list of desired email addresses.
+# enum       => query to get the list of things to group by. First last elements are bound to "result" query
+#               to produce list of desired people.  Last elements are the names to be used to identify that
+#               row in the final sheet.
 # enum_type  => If 'dow' then day of week numbers will be translated to day names, 'grade' will translate
 #               grade numbers to grade names.  Anything else is ignored.
 # result     => query to be executed with each row from enum statement, to produce the deisred group
@@ -173,11 +174,9 @@ sub hyperlink_emails {
 }
 
 sub process_macro {
-
     my $where = $_[0][0];
     my $statement = $_[1];
 
     $statement =~ s/%%QUERY%%/$where/;
-    #print $statement;
     return $dbh->prepare($statement);
 }
