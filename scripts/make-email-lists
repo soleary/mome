@@ -160,11 +160,6 @@ foreach my $row (@rows) {
     $x++;
 }
 
-sub ce {
-    return '' unless defined $_[0];
-    return $_[0];
-}
-
 sub hyperlink_emails {
     my $type = shift;
     my @emails = @_;
