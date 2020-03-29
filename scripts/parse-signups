@@ -173,62 +173,91 @@ sub ce {
     return $_[0];
 }
 
-# Get my rownames and then ditch the row they are in
-my %f = reverse %{$rows[0]->content};
-pop @rows;
+my $momefid_sth = $dbh->prepare_cached('select momefid from family where momefid = ?;');
+
+my $csv = Text::CSV->new();
+open(my $infile, '<', $INFILE) or die "Can't open input file $INFILE: $!\n";
+
+# The first line isn't useful, ditch it.
+$csv->getline($infile);
+
+my $x = 0;
+my %f = map { $_ => $x++ } $csv->getline($infile)->@*;
 
 my @parent_fields = qw/ first last email phone /;
 my @student_fields = qw/ first last grade hr /;
 my @instrument_fields = qw/ ins years /;
 my @fixed_fields = qw/ momefid tuition permission plan /;
 
-foreach my $row (@rows) {
-    if ($row->content->{$f{testing}}) {
+while (my $row = $csv->getline($infile)) {
+    if ($row->[$f{testing}]) {
         next;
     }
 
-    my %row = map { s/^\s+//; s/\s+$//; $_ } %{$row->content};
+    my @row = map { s/^\s+//; s/\s+$//; $_ } $row->@*;
 
-    my $momefid = $row{$f{momefid}};
+    #foreach my $field (sort keys %f) {
+    #    printf "%12s: %s\n", $field, $row[$f{$field}];
+    #}
+
+    my $momefid = $row[$f{momefid}];
     next unless $momefid;
 
-    if ($SAFE) {
+    $momefid_sth->execute($momefid);
+    my $exists = $momefid_sth->fetchrow_array();
+    $momefid_sth->finish();
+
+    if ($SAFE and $exists) {
         next;
-    } else {
+    }
+
+    if (not $SAFE and $exists) {
         delete_momefid($momefid);
     }
 
+    # There are up to four parents/guardians for each family
     foreach my $pn (1..4) {
         my @pfields = map { 'p' . $pn  . $_ } @parent_fields;
 
-        if (grep { /\w/ } @row{ @f{@pfields} }) {
-            write_parent( $momefid, @row{ @f{@pfields} } );
+        if (grep { /\w/ } @row[ @f{@pfields} ]) {
+            write_parent( $momefid, @row[ @f{@pfields} ] );
         }
     }
 
+    # There are up to three students for each family
     foreach my $sn (1..3) {
         my @sfields = map { 's' . $sn . $_ } @student_fields;
 
-        # Make the student's database ID availabe to write_instrument
+        # Make the student's database ID available to write_instrument
         my $sid;
-        if (grep { /\w/ } @row{ @f{@sfields} }) {
-            $sid = write_student($momefid, @row{ @f{@sfields} });
+
+        #print Dumper \@sfields;
+        #print Dumper \@f{@sfields};
+        #print Dumper \@row[@f{@sfields}];
+
+        if (grep { /\w/ } @row[ @f{@sfields} ]) {
+            $sid = write_student($momefid, @row[ @f{@sfields} ]);
         } else {
             next;
         }
 
         # Make grade available to write_instrument
-        my $grade = $row{ $f{'s' . $sn . 'grade'} };
+        my $grade = $row[ $f{'s' . $sn . 'grade'} ];
 
-        foreach my $in (1..3) {
+        unless ($sid and $grade) {
+            die "Can't write an instrument without grade or student id.\n";
+        }
+
+        # Each student can sign up for up to four instruments
+        foreach my $in (1..4) {
             my @ifields = map { 's' . $sn . $_ . $in } @instrument_fields;
 
-            if (grep { /\w/ } @row{ @f{@ifields} }) {
-                write_instrument($sid, $grade, @row{ @f{@ifields} } );
+            if (grep { /\w/ } @row[ @f{@ifields} ]) {
+                write_instrument($sid, $grade, @row[ @f{@ifields} ] );
             } else {
                 next;
             }
         }
     }
-    write_family(@row{@f{@fixed_fields}});
+    write_family(@row[@f{@fixed_fields}]);
 }
