@@ -25,7 +25,7 @@ my $ws = $wb->add_worksheet();
 # result     => query to be executed with each row from enum statement, to produce the deisred group
 my %sths = (
     day  => {
-        enum      => qq{ select distinct(dow) from student_roster; },
+        enum      => qq{ select distinct(dow) from student_roster order by dow; },
         enum_type => 'dow',
         result    => qq{
         select p.firstname, p.lastname, p.email
@@ -36,7 +36,7 @@ my %sths = (
             order by lastname; },
     },
     class   => {
-        enum      => qq{ select distinct(class) from student_roster; },
+        enum      => qq{ select distinct(class) from student_roster order by class; },
         enum_type => '',
         result    => qq{
         select p.firstname, p.lastname, p.email
@@ -47,7 +47,7 @@ my %sths = (
             order by lastname; },
     },
     grade   => {
-        enum      => qq{ select distinct(grade) from student_roster; },
+        enum      => qq{ select distinct(grade) from student_roster order by grade; },
         enum_type => 'grade',
         result    => qq{
         select p.firstname, p.lastname, p.email
