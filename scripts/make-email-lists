@@ -67,8 +67,8 @@ my %sths = (
                 p.email is not null
             and (select id from active_session) = ?
             order by lastname;},
-        # The and on the where clause was added in order to satisfy the requirement that there be one
-        # bind value in the query.  It'll always return true.
+        # The "and" with the bind value on the where clause was added in order to satisfy the
+        # requirement that there be one bind value in the query.  It'll always return true.
     },
 );
 
