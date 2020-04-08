@@ -63,6 +63,7 @@ values
 ('ledger', 'cash',   'Cash'  ),
 ('ledger', 'paypal', 'PayPal'),
 ('ledger', 'refund', 'Refund'),
+('ledger', 'venmo',  'Venmo' ),
 
 /* Ledger entry types for customer statements */
 ('statement', 'debit',  'Tuition Charge'),
@@ -71,6 +72,7 @@ values
 ('statement', 'cash',   'Cash Payment'  ),
 ('statement', 'paypal', 'PayPal Payment'),
 ('statement', 'refund', 'Refund'        ),
+('statement', 'venmo',  'Venmo'         ),
 
 /* Garbage line, but I don't have to remember that
  * the last line above should end with a ';' */

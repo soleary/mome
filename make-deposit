@@ -9,13 +9,14 @@ case "$1" in
     "-k") WHERE="type =  'check'"  ;;
     "-p") WHERE="type =  'paypal'" ;;
     "-r") WHERE="type =  'refund'" ;;
+    "-v") WHERE="type =  'venmo'"  ;;
     *)
 esac
 
 if [ -z "$WHERE" ]
 then
-    echo "No deposit type supplied.  Supply one of -a, -c, -k, -p -r -e";
-    echo "That's all, cash, check, paypal, refund, or credit."
+    echo "No deposit type supplied.  Supply one of -a, -c, -k, -p -r -e -v";
+    echo "That's all, cash, check, paypal, refund, credit, or venmo."
     exit 1;
 fi
 
