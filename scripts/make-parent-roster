@@ -44,9 +44,8 @@ sub make_email_text {
 }
 
 my $parent_sth = $dbh->prepare(qq{
-    select firstname, lastname, phone, email
-    from parent_roster order by lastname, firstname;
-});
+    select firstname, lastname, phone, email from parent_roster; });
+
 $parent_sth->execute();
 
 while (my $parent = $parent_sth->fetch()) {
