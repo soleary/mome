@@ -1,4 +1,3 @@
-requires 'perl'                      => '5.30.1';
 requires 'DateTime'                  => '>= 1.50';
 requires 'Excel::Writer::XLSX'       => '>= 1.00';
 requires 'JSON::MaybeXS'             => '>= 1.004000';
@@ -8,3 +7,4 @@ requires 'Storable'                  => '>= 3.08';
 requires 'Term::Prompt'              => '>= 1.04';
 requires 'Text::CSV'                 => '>= 1.99';
 requires 'URI::Encode'               => '>= 1.1.1';
+requires 'perl'                => '5.30.2';
