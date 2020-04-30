@@ -77,19 +77,140 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       Pod::Text 2.08
-  DateTime-1.50
-    pathname: D/DR/DROLSKY/DateTime-1.50.tar.gz
+  DBD-SQLite-1.64
+    pathname: I/IS/ISHIGAKI/DBD-SQLite-1.64.tar.gz
     provides:
-      DateTime 1.50
-      DateTime::Duration 1.50
-      DateTime::Helpers 1.50
-      DateTime::Infinite 1.50
-      DateTime::Infinite::Future 1.50
-      DateTime::Infinite::Past 1.50
-      DateTime::LeapSecond 1.50
-      DateTime::PP 1.50
-      DateTime::PPExtra 1.50
-      DateTime::Types 1.50
+      DBD::SQLite 1.64
+      DBD::SQLite::Constants undef
+      DBD::SQLite::GetInfo undef
+      DBD::SQLite::VirtualTable 1.64
+      DBD::SQLite::VirtualTable::Cursor 1.64
+      DBD::SQLite::VirtualTable::FileContent undef
+      DBD::SQLite::VirtualTable::FileContent::Cursor undef
+      DBD::SQLite::VirtualTable::PerlData undef
+      DBD::SQLite::VirtualTable::PerlData::Cursor undef
+    requirements:
+      DBI 1.57
+      ExtUtils::MakeMaker 0
+      File::Spec 0.82
+      Test::More 0.88
+      Tie::Hash 0
+      perl 5.006
+  DBI-1.643
+    pathname: T/TI/TIMB/DBI-1.643.tar.gz
+    provides:
+      Bundle::DBI 12.008696
+      DBD::DBM 0.08
+      DBD::DBM::Statement 0.08
+      DBD::DBM::Table 0.08
+      DBD::DBM::db 0.08
+      DBD::DBM::dr 0.08
+      DBD::DBM::st 0.08
+      DBD::ExampleP 12.014311
+      DBD::ExampleP::db 12.014311
+      DBD::ExampleP::dr 12.014311
+      DBD::ExampleP::st 12.014311
+      DBD::File 0.44
+      DBD::File::DataSource::File 0.44
+      DBD::File::DataSource::Stream 0.44
+      DBD::File::Statement 0.44
+      DBD::File::Table 0.44
+      DBD::File::TableSource::FileSystem 0.44
+      DBD::File::db 0.44
+      DBD::File::dr 0.44
+      DBD::File::st 0.44
+      DBD::Gofer 0.015327
+      DBD::Gofer::Policy::Base 0.010088
+      DBD::Gofer::Policy::classic 0.010088
+      DBD::Gofer::Policy::pedantic 0.010088
+      DBD::Gofer::Policy::rush 0.010088
+      DBD::Gofer::Transport::Base 0.014121
+      DBD::Gofer::Transport::corostream undef
+      DBD::Gofer::Transport::null 0.010088
+      DBD::Gofer::Transport::pipeone 0.010088
+      DBD::Gofer::Transport::stream 0.014599
+      DBD::Gofer::db 0.015327
+      DBD::Gofer::dr 0.015327
+      DBD::Gofer::st 0.015327
+      DBD::Mem 0.001
+      DBD::Mem::DataSource 0.001
+      DBD::Mem::Statement 0.001
+      DBD::Mem::Table 0.001
+      DBD::Mem::db 0.001
+      DBD::Mem::dr 0.001
+      DBD::Mem::st 0.001
+      DBD::NullP 12.014715
+      DBD::NullP::db 12.014715
+      DBD::NullP::dr 12.014715
+      DBD::NullP::st 12.014715
+      DBD::Proxy 0.2004
+      DBD::Proxy::RPC::PlClient 0.2004
+      DBD::Proxy::db 0.2004
+      DBD::Proxy::dr 0.2004
+      DBD::Proxy::st 0.2004
+      DBD::Sponge 12.010003
+      DBD::Sponge::db 12.010003
+      DBD::Sponge::dr 12.010003
+      DBD::Sponge::st 12.010003
+      DBDI 12.015129
+      DBI 1.643
+      DBI::Const::GetInfo::ANSI 2.008697
+      DBI::Const::GetInfo::ODBC 2.011374
+      DBI::Const::GetInfoReturn 2.008697
+      DBI::Const::GetInfoType 2.008697
+      DBI::DBD 12.015129
+      DBI::DBD::Metadata 2.014214
+      DBI::DBD::SqlEngine 0.06
+      DBI::DBD::SqlEngine::DataSource 0.06
+      DBI::DBD::SqlEngine::Statement 0.06
+      DBI::DBD::SqlEngine::Table 0.06
+      DBI::DBD::SqlEngine::TableSource 0.06
+      DBI::DBD::SqlEngine::TieMeta 0.06
+      DBI::DBD::SqlEngine::TieTables 0.06
+      DBI::DBD::SqlEngine::db 0.06
+      DBI::DBD::SqlEngine::dr 0.06
+      DBI::DBD::SqlEngine::st 0.06
+      DBI::Gofer::Execute 0.014283
+      DBI::Gofer::Request 0.012537
+      DBI::Gofer::Response 0.011566
+      DBI::Gofer::Serializer::Base 0.009950
+      DBI::Gofer::Serializer::DataDumper 0.009950
+      DBI::Gofer::Serializer::Storable 0.015586
+      DBI::Gofer::Transport::Base 0.012537
+      DBI::Gofer::Transport::pipeone 0.012537
+      DBI::Gofer::Transport::stream 0.012537
+      DBI::Profile 2.015065
+      DBI::ProfileData 2.010008
+      DBI::ProfileDumper 2.015325
+      DBI::ProfileDumper::Apache 2.014121
+      DBI::ProfileSubs 0.009396
+      DBI::ProxyServer 0.3005
+      DBI::ProxyServer::db 0.3005
+      DBI::ProxyServer::dr 0.3005
+      DBI::ProxyServer::st 0.3005
+      DBI::SQL::Nano 1.015544
+      DBI::SQL::Nano::Statement_ 1.015544
+      DBI::SQL::Nano::Table_ 1.015544
+      DBI::Util::CacheMemory 0.010315
+      DBI::Util::_accessor 0.009479
+      DBI::common 1.643
+    requirements:
+      ExtUtils::MakeMaker 6.48
+      Test::Simple 0.90
+      perl 5.008001
+  DateTime-1.52
+    pathname: D/DR/DROLSKY/DateTime-1.52.tar.gz
+    provides:
+      DateTime 1.52
+      DateTime::Duration 1.52
+      DateTime::Helpers 1.52
+      DateTime::Infinite 1.52
+      DateTime::Infinite::Future 1.52
+      DateTime::Infinite::Past 1.52
+      DateTime::LeapSecond 1.52
+      DateTime::PP 1.52
+      DateTime::PPExtra 1.52
+      DateTime::Types 1.52
     requirements:
       Carp 0
       DateTime::Locale 1.06
@@ -581,41 +702,41 @@ DISTRIBUTIONS
       overload 0
       strict 0
       warnings 0
-  Excel-Writer-XLSX-1.00
-    pathname: J/JM/JMCNAMARA/Excel-Writer-XLSX-1.00.tar.gz
+  Excel-Writer-XLSX-1.03
+    pathname: J/JM/JMCNAMARA/Excel-Writer-XLSX-1.03.tar.gz
     provides:
-      Excel::Writer::XLSX 1.00
-      Excel::Writer::XLSX::Chart 1.00
-      Excel::Writer::XLSX::Chart::Area 1.00
-      Excel::Writer::XLSX::Chart::Bar 1.00
-      Excel::Writer::XLSX::Chart::Column 1.00
-      Excel::Writer::XLSX::Chart::Doughnut 1.00
-      Excel::Writer::XLSX::Chart::Line 1.00
-      Excel::Writer::XLSX::Chart::Pie 1.00
-      Excel::Writer::XLSX::Chart::Radar 1.00
-      Excel::Writer::XLSX::Chart::Scatter 1.00
-      Excel::Writer::XLSX::Chart::Stock 1.00
-      Excel::Writer::XLSX::Chartsheet 1.00
-      Excel::Writer::XLSX::Drawing 1.00
-      Excel::Writer::XLSX::Examples 1.00
-      Excel::Writer::XLSX::Format 1.00
-      Excel::Writer::XLSX::Package::App 1.00
-      Excel::Writer::XLSX::Package::Comments 1.00
-      Excel::Writer::XLSX::Package::ContentTypes 1.00
-      Excel::Writer::XLSX::Package::Core 1.00
-      Excel::Writer::XLSX::Package::Custom 1.00
-      Excel::Writer::XLSX::Package::Packager 1.00
-      Excel::Writer::XLSX::Package::Relationships 1.00
-      Excel::Writer::XLSX::Package::SharedStrings 1.00
-      Excel::Writer::XLSX::Package::Styles 1.00
-      Excel::Writer::XLSX::Package::Table 1.00
-      Excel::Writer::XLSX::Package::Theme 1.00
-      Excel::Writer::XLSX::Package::VML 1.00
-      Excel::Writer::XLSX::Package::XMLwriter 1.00
-      Excel::Writer::XLSX::Shape 1.00
-      Excel::Writer::XLSX::Utility 1.00
-      Excel::Writer::XLSX::Workbook 1.00
-      Excel::Writer::XLSX::Worksheet 1.00
+      Excel::Writer::XLSX 1.03
+      Excel::Writer::XLSX::Chart 1.03
+      Excel::Writer::XLSX::Chart::Area 1.03
+      Excel::Writer::XLSX::Chart::Bar 1.03
+      Excel::Writer::XLSX::Chart::Column 1.03
+      Excel::Writer::XLSX::Chart::Doughnut 1.03
+      Excel::Writer::XLSX::Chart::Line 1.03
+      Excel::Writer::XLSX::Chart::Pie 1.03
+      Excel::Writer::XLSX::Chart::Radar 1.03
+      Excel::Writer::XLSX::Chart::Scatter 1.03
+      Excel::Writer::XLSX::Chart::Stock 1.03
+      Excel::Writer::XLSX::Chartsheet 1.03
+      Excel::Writer::XLSX::Drawing 1.03
+      Excel::Writer::XLSX::Examples 1.03
+      Excel::Writer::XLSX::Format 1.03
+      Excel::Writer::XLSX::Package::App 1.03
+      Excel::Writer::XLSX::Package::Comments 1.03
+      Excel::Writer::XLSX::Package::ContentTypes 1.03
+      Excel::Writer::XLSX::Package::Core 1.03
+      Excel::Writer::XLSX::Package::Custom 1.03
+      Excel::Writer::XLSX::Package::Packager 1.03
+      Excel::Writer::XLSX::Package::Relationships 1.03
+      Excel::Writer::XLSX::Package::SharedStrings 1.03
+      Excel::Writer::XLSX::Package::Styles 1.03
+      Excel::Writer::XLSX::Package::Table 1.03
+      Excel::Writer::XLSX::Package::Theme 1.03
+      Excel::Writer::XLSX::Package::VML 1.03
+      Excel::Writer::XLSX::Package::XMLwriter 1.03
+      Excel::Writer::XLSX::Shape 1.03
+      Excel::Writer::XLSX::Utility 1.03
+      Excel::Writer::XLSX::Workbook 1.03
+      Excel::Writer::XLSX::Worksheet 1.03
     requirements:
       Archive::Zip 1.3
       ExtUtils::MakeMaker 0
@@ -704,6 +825,20 @@ DISTRIBUTIONS
       perl 5.008
       strict 0
       utf8 0
+      warnings 0
+  Modern-Perl-1.20200211
+    pathname: C/CH/CHROMATIC/Modern-Perl-1.20200211.tar.gz
+    provides:
+      Modern::Perl 1.20200211
+      odern::Perl 1.20200211
+    requirements:
+      ExtUtils::MakeMaker 0
+      IO::File 0
+      IO::Handle 0
+      feature 0
+      mro 0
+      perl 5.010
+      strict 0
       warnings 0
   Module-Build-0.4224
     pathname: L/LE/LEONT/Module-Build-0.4224.tar.gz
@@ -955,12 +1090,12 @@ DISTRIBUTIONS
       Try::Tiny 0.07
       strict 0
       warnings 0
-  Text-CSV-1.99
-    pathname: I/IS/ISHIGAKI/Text-CSV-1.99.tar.gz
+  Text-CSV-2.00
+    pathname: I/IS/ISHIGAKI/Text-CSV-2.00.tar.gz
     provides:
-      Text::CSV 1.99
-      Text::CSV::ErrorDiag 1.99
-      Text::CSV_PP 1.99
+      Text::CSV 2.00
+      Text::CSV::ErrorDiag 2.00
+      Text::CSV_PP 2.00
     requirements:
       ExtUtils::MakeMaker 0
       IO::Handle 0
