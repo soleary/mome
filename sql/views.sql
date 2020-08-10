@@ -149,14 +149,15 @@ union select 05, 'Balance', printf("%.2f", sum(amount)) from clean_ledger where 
 union select 06, 'High', printf("%.2f", max(balance)) from balance where momefid in (select momefid from billing_family)
 union select 07, 'Low', printf("%.2f", min(balance)) from balance where momefid in (select momefid from billing_family)
 union select 08, 'Families', count(id) from billing_family
-union select 09, 'Parents', count(id) from parent_roster
-union select 10, 'Students', count(id) from student_roster
-union select 11, 'Payers', count(id) from billing_person where type = 'payer'
+union select 09, 'Parents', count(distinct(personid)) from parent_roster
+union select 10, 'Students', count(distinct(personid)) from student_roster
+union select 11, 'Payers', count(distinct(personid)) from billing_person where type = 'payer'
+union select 12, 'Student-Sections', count(personid) from student_roster
 union select 12, 'Paid Up', count(*) from paid_up where momefid in (select momefid from billing_family)
 union select 13, 'Zero Balance', count(*) from balance where balance = 0 and momefid in (select momefid from billing_family)
 union select 14, 'Negative Balance', count(*) from balance where balance < 0 and momefid in (select momefid from billing_family)
 union select 15, 'Positive Balance', count(*) from balance where balance > 0 and momefid in (select momefid from billing_family)
-union select 16, 'Invoices', count(id) from invoice where momefid in (select momefid from billing_family)
+union select 16, 'Invoices', count(id) from invoice where session = (select id from active_session)
 union select 17, 'Notifications', count(id) from notification where sentdate is not null and momefid in (select momefid from billing_family)
 union select 18, 'Payments', count(id) from ledger where type != 'debit' and momefid in (select momefid from billing_family)
 union select 19, 'Debits', count(id) from ledger where type = 'debit' and momefid in (select momefid from billing_family)
