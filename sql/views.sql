@@ -131,7 +131,7 @@ create view student_roster as
  * least one active student in their family. */
 drop view if exists parent_roster;
 create view parent_roster as
-    select f.momefid, p.id, p.firstname, p.lastname, p.phone, p.email
+    select f.momefid, p.id, p.id as personid, p.firstname, p.lastname, p.phone, p.email
     from person as p, family as f, family_member as fm
     where p.id = fm.personid
         and fm.momefid = f.momefid
